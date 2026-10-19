@@ -31,6 +31,13 @@ Medians of `tools\strata_bench.py` (default suite, 3 runs each) against a runnin
    `packs\` and `mtp\` in the tier file's paths.
 3. Copy the nearest tier file to a new tier name and tune it.
 
+## Take a release
+
+1. Stop the server, then `git pull` and `git submodule update --init`.
+2. Read the new versions' notices in `CHANGELOG.md` and do what they say, such as
+   `.\START-HERE.bat --update --yes --no-start` in `vendor\strata`.
+3. Start the server.
+
 ## Update Strata
 
 Never run Strata's `UPDATE.bat`: it pulls `main` and leaves the pinned version.

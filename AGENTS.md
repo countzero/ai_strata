@@ -34,6 +34,9 @@ message. Describe hardware by its parts (GPU, VRAM, RAM, cores).
 
 ## Version Control
 
+Semantic Versioning. `CHANGELOG.md` follows Common Changelog and is written only as a step of a
+release (`.opencode/skills/release/SKILL.md`).
+
 Commit only when asked, and push only when asked; "commit" does not imply "push". The subject is
 one imperative line. The body carries the measurement, the reason, and what was left undone. No
 `Co-Authored-By` trailer.
