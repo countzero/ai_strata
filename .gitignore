@@ -1,0 +1,2 @@
+# The web app's Chat settings, written next to the config on every change.
+*.shared-settings.json
