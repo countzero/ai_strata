@@ -43,8 +43,9 @@ Medians of `tools\strata_bench.py` (default suite, 3 runs each) against a runnin
 Never run Strata's `UPDATE.bat`: it pulls `main` and leaves the pinned version.
 
 1. Stop the server.
-2. Pick the version: `git -C vendor\strata fetch --tags`, then
+2. Pick the version: `git -C vendor\strata fetch --tags --force`, then
    `git -C vendor\strata tag --sort=-v:refname | Select-Object -First 5`. Read its release notes.
+   Without `--force` the fetch stops at upstream's rewritten older tags and shows no new one.
 3. `git -C vendor\strata checkout <tag>`
 4. In `vendor\strata`: `.\START-HERE.bat --update --yes --no-start`. This updates the engine,
    the Python packages and setup's own `strata-*.json`.
