@@ -1,19 +1,20 @@
 # ai_strata
 
-My [Strata](https://github.com/Niko1221/Strata) setup, shared between machines: Strata pinned as a submodule,
-plus one run config per hardware tier. Model files live outside the repository under `D:\AI\LLM\gguf`.
+My [Strata](https://github.com/Niko1221/Strata) setup, shared between machines: Strata pinned as a
+submodule, plus one run config per hardware tier. Model files live outside the repository; each tier
+file names their paths.
 
-## Start
+## Usage
 
-Win+R:
+Start the server:
 
 ```
-pwsh -NoExit -wd D:\Arbeit\ai_strata\vendor\strata -c ".\.venv\Scripts\python.exe serve\server.py --engine strata --config ..\..\presets\<tier>.json --port 8083"
+pwsh -NoExit -wd <repo>\vendor\strata -c ".\.venv\Scripts\python.exe serve\server.py --engine strata --config ..\..\presets\<tier>.json --port 8083"
 ```
 
-Paths inside Strata in a tier file are relative and only resolve when the server starts from
-`vendor\strata`. A tier file sets `"host": "0.0.0.0"` and no API key, so every device on the
-network can use the server.
+`<repo>` is where you cloned this repository. Paths inside Strata in a tier file are relative and
+only resolve when the server starts from `vendor\strata`. A tier file sets `"host": "0.0.0.0"` and
+no API key, so every device on the network can use the server.
 
 ## Tiers
 
@@ -25,8 +26,9 @@ Medians of `tools\strata_bench.py` (default suite, 3 runs each) against a runnin
 
 ## New machine
 
-1. `git clone --recurse-submodules <this repo> D:\Arbeit\ai_strata`
-2. In `vendor\strata`: `.\START-HERE.bat --yes --no-start --data-dir D:\AI\LLM\gguf\Qwen3.8-Flash-Next`
+1. `git clone --recurse-submodules <url of this repository> <repo>`
+2. In `vendor\strata`: `.\START-HERE.bat --yes --no-start --data-dir <data folder>`, the folder that holds
+   `packs\` and `mtp\` in the tier file's paths.
 3. Copy the nearest tier file to a new tier name and tune it.
 
 ## Update Strata
