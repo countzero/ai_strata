@@ -22,7 +22,7 @@ Medians of `tools\strata_bench.py` (default suite, 3 runs each) against a runnin
 
 | Tier file                                                  | Hardware                                                   | Strata    | Chat decode | 16K prompt   | Agent decode | Agent cache hit |
 | ---------------------------------------------------------- | ---------------------------------------------------------- | --------- | ----------- | ------------ | ------------ | --------------- |
-| `qwen3.8-flash-next.unsloth-ud-iq4_xs.24GB_VRAM_192GB_RAM` | RTX PRO 5000 Blackwell Laptop 24 GB, 192 GB RAM, 24 cores  | v0.1.44.1 | 61.4 tok/s  | 2134 tok/s   | 48.7 tok/s   | 68.8 %          |
+| `qwen3.8-flash-next.unsloth-ud-iq4_xs.24GB_VRAM_192GB_RAM` | RTX PRO 5000 Blackwell Laptop 24 GB, 192 GB RAM, 24 cores  | v0.1.45   | 70.5 tok/s  | 2617 tok/s   | 69.1 tok/s   | 68.7 %          |
 
 ## New machine
 
