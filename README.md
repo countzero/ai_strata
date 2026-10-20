@@ -14,9 +14,9 @@ pwsh -NoExit -wd <repo>\vendor\strata -c ".\.venv\Scripts\python.exe serve\serve
 
 `<repo>` is where you cloned this repository. Paths inside Strata in a tier file are relative and
 only resolve when the server starts from `vendor\strata`. A tier file sets `"host": "0.0.0.0"`, so
-every device on the network can use the server. Strata refuses that without an API key, so a tier
-file also sets `"api_key": "insecure"`: a fixed value, not a secret. Clients send it as
-`Authorization: Bearer insecure` or `x-api-key: insecure`.
+every device on the network can use the server. A tier file also sets `"api_key": "insecure"`: a
+fixed value, not a secret (Strata 0.2.1 refused the open host without a key; since 0.2.1.3 it only
+warns). Clients send it as `Authorization: Bearer insecure` or `x-api-key: insecure`.
 
 ## Tiers
 
@@ -24,8 +24,12 @@ Medians of `tools\strata_bench.py` (default suite, 3 runs each) against a runnin
 
 | Tier file                                                      | Hardware                                                                     | Strata    | Chat decode | 16K prompt   | Agent decode | Agent cache hit |
 | -------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------- | ----------- | ------------ | ------------ | --------------- |
-| `qwen3.8-flash-next.unsloth-ud-iq4_xs.24GB_VRAM_192GB_RAM`     | RTX PRO 5000 Blackwell Laptop 24 GB, 192 GB RAM, 24 cores                    | v0.1.45   | 70.5 tok/s  | 2617 tok/s   | 69.1 tok/s   | 68.7 %          |
+| `qwen3.8-flash-next.unsloth-ud-iq4_xs.24GB_VRAM_192GB_RAM`     | RTX PRO 5000 Blackwell Laptop 24 GB, 192 GB RAM, 24 cores                    | v0.2.1.3  | 69.3 tok/s  | 2547 tok/s   | 42.6 tok/s   | 69.4 %          |
 | `qwen3.8-flash-next.unsloth-ud-iq4_xs.16GB_8GB_VRAM_128GB_RAM` | RTX 4070 Ti SUPER 16 GB + RTX 2060 SUPER 8 GB (vision), 128 GB RAM, 16 cores | v0.2.1    | 52.5 tok/s  | 2930 tok/s   | 55.3 tok/s   | 69.4 %          |
+
+The 24 GB tier's v0.2.1.3 row was measured while other programs held most of the card's VRAM.
+v0.1.45 in the same session gave the same agent decode (42.6 tok/s; 69.1 on a free card), so the
+drop is the load, not the update.
 
 ## New machine
 
@@ -53,16 +57,26 @@ Never run Strata's `UPDATE.bat`: it pulls `main` and leaves the pinned version.
    `git -C vendor\strata tag --sort=-v:refname | Select-Object -First 5`. Read its release notes.
    Without `--force` the fetch stops at upstream's rewritten older tags and shows no new one.
 3. `git -C vendor\strata checkout <tag>`
-4. In `vendor\strata`: `.\START-HERE.bat --update --yes --no-start`. This updates the engine,
-   the Python packages and setup's own `strata-*.json`.
-5. Compare setup's config with the tier file:
+4. In `vendor\strata`: `.\START-HERE.bat --update --yes --no-start`. This updates the Python
+   packages and setup's own `strata-*.json`, but the engine only when it is older than setup's
+   minimum, and since v0.2.1 it would compile it on Windows, which fails.
+5. Install the engine by hand, in `vendor\strata`. A point release (v0.2.1.3) has no release page;
+   its engine is on the base release's (v0.2.1):
+   `gh release download <release> -R Niko1221/Strata -p "strata-engine-*-windows-x86_64-cuda-cuda13.tar.gz" -p SHA256SUMS.txt -D <temp folder>`.
+   Check the package's SHA-256 against `SHA256SUMS.txt`, move the files of `engine\` into
+   `engine\.previous\` (emptied first), unpack the package into `engine\`, and check
+   `engine\strata.exe --version`.
+6. Compare setup's config with the tier file:
    `git diff --no-index presets\<tier>.json vendor\strata\strata-unsloth-ud-iq4_xs.json`.
    Ignore the path differences (relative here, absolute there). Carry over new or changed flags,
    and `lib_dirs`: a renamed CUDA folder there fails silently, and the engine then stops
    without naming the missing DLL.
-6. Start, check that the model loads, and run
-   `.\.venv\Scripts\python.exe tools\strata_bench.py --url http://127.0.0.1:8083 --out $env:TEMP\strata-bench`
-   in `vendor\strata`; without `--out` the results land inside the submodule. Put the numbers in *Tiers*.
-7. `git add vendor/strata presets README.md` and commit as "Update Strata to <tag>".
+7. Start, check that the model loads, and run
+   `.\.venv\Scripts\python.exe tools\strata_bench.py --url http://127.0.0.1:8083 --api-key insecure --out $env:TEMP\strata-bench`
+   in `vendor\strata`; without `--out` the results land inside the submodule. VRAM taken by other
+   programs lowers the numbers: when they differ from the old row, run the old version in the same
+   session before calling it a regression. Put the numbers in *Tiers*.
+8. `git add vendor/strata presets README.md` and commit as "Update Strata to <tag>".
 
-Rollback: `git checkout <last commit> -- vendor/strata presets`, `git submodule update`, then step 4 again.
+Rollback: `git checkout <last commit> -- vendor/strata presets`, `git submodule update`, then copy
+`engine\.previous\` back into `engine\`.
