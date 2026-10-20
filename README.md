@@ -13,8 +13,10 @@ pwsh -NoExit -wd <repo>\vendor\strata -c ".\.venv\Scripts\python.exe serve\serve
 ```
 
 `<repo>` is where you cloned this repository. Paths inside Strata in a tier file are relative and
-only resolve when the server starts from `vendor\strata`. A tier file sets `"host": "0.0.0.0"` and
-no API key, so every device on the network can use the server.
+only resolve when the server starts from `vendor\strata`. A tier file sets `"host": "0.0.0.0"`, so
+every device on the network can use the server. Strata refuses that without an API key, so a tier
+file also sets `"api_key": "insecure"`: a fixed value, not a secret. Clients send it as
+`Authorization: Bearer insecure` or `x-api-key: insecure`.
 
 ## Tiers
 
@@ -27,8 +29,11 @@ Medians of `tools\strata_bench.py` (default suite, 3 runs each) against a runnin
 ## New machine
 
 1. `git clone --recurse-submodules <url of this repository> <repo>`
-2. In `vendor\strata`: `.\START-HERE.bat --yes --no-start --data-dir <data folder>`, the folder that holds
-   `packs\` and `mtp\` in the tier file's paths.
+2. In `vendor\strata`:
+   `.\START-HERE.bat --yes --no-start --family unsloth --model <quant> --context <tokens> --gpu <n> --port 8083 --gguf-dir <GGUF folder> --data-dir <data folder>`.
+   The data folder holds `packs\` and `mtp\` in the tier file's paths. Name the model: with `--no-start`
+   setup takes its own recommended answers, which can be another model and a new download. Add
+   `--move-data` to move the files of an earlier Strata install into the data folder; without it they stay.
 3. Copy the nearest tier file to a new tier name and tune it.
 
 ## Take a release
