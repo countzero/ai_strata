@@ -15,8 +15,8 @@ pwsh -NoExit -wd <repo>\vendor\strata -c ".\.venv\Scripts\python.exe serve\serve
 `<repo>` is where you cloned this repository. Paths inside Strata in a tier file are relative and
 only resolve when the server starts from `vendor\strata`. A tier file sets `"host": "0.0.0.0"`, so
 every device on the network can use the server. A tier file also sets `"api_key": "insecure"`: a
-fixed value, not a secret (Strata 0.2.1 refused the open host without a key; since 0.2.1.3 it only
-warns). Clients send it as `Authorization: Bearer insecure` or `x-api-key: insecure`.
+fixed value, not a secret. Clients send it as `Authorization: Bearer insecure` or
+`x-api-key: insecure`.
 
 ## Tiers
 
@@ -27,9 +27,8 @@ Medians of `tools\strata_bench.py` (default suite, 3 runs each) against a runnin
 | `qwen3.8-flash-next.unsloth-ud-iq4_xs.24GB_VRAM_192GB_RAM`     | RTX PRO 5000 Blackwell Laptop 24 GB, 192 GB RAM, 24 cores                    | v0.2.1.3  | 69.3 tok/s  | 2547 tok/s   | 42.6 tok/s   | 69.4 %          |
 | `qwen3.8-flash-next.unsloth-ud-iq4_xs.16GB_8GB_VRAM_128GB_RAM` | RTX 4070 Ti SUPER 16 GB + RTX 2060 SUPER 8 GB (vision), 128 GB RAM, 16 cores | v0.2.1    | 52.5 tok/s  | 2930 tok/s   | 55.3 tok/s   | 69.4 %          |
 
-The 24 GB tier's v0.2.1.3 row was measured while other programs held most of the card's VRAM.
-v0.1.45 in the same session gave the same agent decode (42.6 tok/s; 69.1 on a free card), so the
-drop is the load, not the update.
+The 24 GB row was measured while other programs held most of the card's VRAM. v0.1.45 under the
+same load also gave 42.6 tok/s agent decode, and 69.1 on a free card.
 
 ## New machine
 
@@ -58,8 +57,8 @@ Never run Strata's `UPDATE.bat`: it pulls `main` and leaves the pinned version.
    Without `--force` the fetch stops at upstream's rewritten older tags and shows no new one.
 3. `git -C vendor\strata checkout <tag>`
 4. In `vendor\strata`: `.\START-HERE.bat --update --yes --no-start`. This updates the Python
-   packages and setup's own `strata-*.json`, but the engine only when it is older than setup's
-   minimum, and since v0.2.1 it would compile it on Windows, which fails.
+   packages and setup's own `strata-*.json`, not the engine: setup replaces only one older than
+   its minimum, and then compiles it on Windows, which fails.
 5. Install the engine by hand, in `vendor\strata`. A point release (v0.2.1.3) has no release page;
    its engine is on the base release's (v0.2.1):
    `gh release download <release> -R Niko1221/Strata -p "strata-engine-*-windows-x86_64-cuda-cuda13.tar.gz" -p SHA256SUMS.txt -D <temp folder>`.

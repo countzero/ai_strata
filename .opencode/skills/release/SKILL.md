@@ -28,8 +28,8 @@ Stop and tell the user when one fails:
   `origin/main`.
 - `git -C vendor/strata describe --tags --exact-match` names an upstream tag: `vendor/strata` is a
   submodule and sits on a release of Strata.
-- For every tier file changed since the last tag, its row in `README.md` -> *Tiers* names that
-  same Strata tag. Otherwise its numbers were measured on another version.
+- When `vendor/strata` moved since the last tag, at least one row in `README.md` -> *Tiers* names
+  its tag. The other rows may keep the older tag their numbers were measured on.
 
 ## 2. Collect
 
