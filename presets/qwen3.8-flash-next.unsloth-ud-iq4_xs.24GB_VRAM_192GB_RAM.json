@@ -2,9 +2,9 @@
  "exe": "engine\\strata.exe",
  "args": [
   "--pack",
-  "D:\\AI\\LLM\\gguf\\Qwen3.8-Flash-Next\\packs\\unsloth-ud-iq4_xs",
+  "E:\\AI\\LLM\\gguf\\Qwen3.8-Flash-Next-GGUF\\strata\\packs\\unsloth-ud-iq4_xs",
   "--native",
-  "D:\\AI\\LLM\\gguf\\Qwen3.8-Flash-Next-GGUF\\UD-IQ4_XS\\Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf",
+  "E:\\AI\\LLM\\gguf\\Qwen3.8-Flash-Next-GGUF\\UD-IQ4_XS\\Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf",
   "--expert-profile",
   "data\\expert-profile.bin",
   "--expert-cache",
@@ -16,7 +16,7 @@
   "--spec-min-p",
   "0.7",
   "--mtp",
-  "D:\\AI\\LLM\\gguf\\Qwen3.8-Flash-Next\\mtp\\rt",
+  "E:\\AI\\LLM\\gguf\\Qwen3.8-Flash-Next-GGUF\\strata\\mtp\\rt",
   "--max-context",
   "262144",
   "--kv",
@@ -42,7 +42,7 @@
  "cwd": ".",
  "host": "0.0.0.0",
  "api_key": "insecure",
- "tokenizer": "D:\\AI\\LLM\\gguf\\Qwen3.8-Flash-Next\\packs\\unsloth-ud-iq4_xs\\tokenizer",
+ "tokenizer": "E:\\AI\\LLM\\gguf\\Qwen3.8-Flash-Next-GGUF\\strata\\packs\\unsloth-ud-iq4_xs\\tokenizer",
  "model_name": "qwen3.8-flash-next-unsloth-ud-iq4_xs",
  "log": "strata-unsloth-ud-iq4_xs.log",
  "lib_dirs": [
@@ -55,8 +55,8 @@
  "gpu": 0,
  "vision": {
   "exe": "engine\\strata-vision.exe",
-  "mmproj": "D:\\AI\\LLM\\gguf\\Qwen3.8-Flash-Next\\models\\mmproj-Qwen3.8-Flash-Next-BF16.gguf",
-  "model": "D:\\AI\\LLM\\gguf\\Qwen3.8-Flash-Next-GGUF\\UD-IQ4_XS\\Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf",
+  "mmproj": "E:\\AI\\LLM\\gguf\\Qwen3.8-Flash-Next-GGUF\\strata\\models\\mmproj-Qwen3.8-Flash-Next-BF16.gguf",
+  "model": "E:\\AI\\LLM\\gguf\\Qwen3.8-Flash-Next-GGUF\\UD-IQ4_XS\\Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf",
   "gpu": true,
   "max_tokens": 1024,
   "elastic": true
