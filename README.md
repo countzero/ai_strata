@@ -24,11 +24,11 @@ Medians of `tools\strata_bench.py` (default suite, 3 runs each) against a runnin
 
 | Tier file                                                      | Hardware                                                                     | Strata    | Chat decode | 16K prompt   | Agent decode | Agent cache hit |
 | -------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------- | ----------- | ------------ | ------------ | --------------- |
-| `qwen3.8-flash-next.unsloth-ud-iq4_xs.24GB_VRAM_192GB_RAM`     | RTX PRO 5000 Blackwell Laptop 24 GB, 192 GB RAM, 24 cores                    | v0.2.1.3  | 69.3 tok/s  | 2547 tok/s   | 42.6 tok/s   | 69.4 %          |
+| `qwen3.8-flash-next.unsloth-ud-iq4_xs.24GB_VRAM_192GB_RAM`     | RTX PRO 5000 Blackwell Laptop 24 GB, 192 GB RAM, 24 cores                    | v0.2.2    | 73.5 tok/s  | 2701 tok/s   | 57.0 tok/s   | 69.6 %          |
 | `qwen3.8-flash-next.unsloth-ud-iq4_xs.16GB_8GB_VRAM_128GB_RAM` | RTX 4070 Ti SUPER 16 GB + RTX 2060 SUPER 8 GB (vision), 128 GB RAM, 16 cores | v0.2.1    | 52.5 tok/s  | 2930 tok/s   | 55.3 tok/s   | 69.4 %          |
 
-The 24 GB row was measured while other programs held most of the card's VRAM. v0.1.45 under the
-same load also gave 42.6 tok/s agent decode, and 69.1 on a free card.
+The 24 GB row was measured on a free card. v0.2.1.3 in the same session gave 68.7 tok/s chat
+decode, 2627 tok/s 16K prompt and 56.8 tok/s agent decode.
 
 ## New machine
 
