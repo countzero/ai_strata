@@ -38,6 +38,8 @@
   "80",
   "--adapt-decay",
   "0.97",
+  "--ple-io",
+  "ram",
   "--conversation-cache-mib",
   "8192"
  ],
