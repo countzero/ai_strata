@@ -41,7 +41,6 @@
  ],
  "cwd": ".",
  "host": "0.0.0.0",
- "api_key": "insecure",
  "tokenizer": "E:\\AI\\LLM\\gguf\\Qwen3.8-Flash-Next-GGUF\\strata\\packs\\unsloth-ud-iq4_xs\\tokenizer",
  "model_name": "qwen3.8-flash-next-unsloth-ud-iq4_xs",
  "log": "strata-unsloth-ud-iq4_xs.log",

@@ -14,9 +14,8 @@ pwsh -NoExit -wd <repo>\vendor\strata -c ".\.venv\Scripts\python.exe serve\serve
 
 `<repo>` is where you cloned this repository. Paths inside Strata in a tier file are relative and
 only resolve when the server starts from `vendor\strata`. A tier file sets `"host": "0.0.0.0"`, so
-every device on the network can use the server. A tier file also sets `"api_key": "insecure"`: a
-fixed value, not a secret. Clients send it as `Authorization: Bearer insecure` or
-`x-api-key: insecure`.
+every device on the network can use the server. A tier file sets no API key: clients need none,
+and the server warns about it once at start.
 
 ## Tiers
 
@@ -71,7 +70,7 @@ Never run Strata's `UPDATE.bat`: it pulls `main` and leaves the pinned version.
    and `lib_dirs`: a renamed CUDA folder there fails silently, and the engine then stops
    without naming the missing DLL.
 7. Start, check that the model loads, and run
-   `.\.venv\Scripts\python.exe tools\strata_bench.py --url http://127.0.0.1:8083 --api-key insecure --out $env:TEMP\strata-bench`
+   `.\.venv\Scripts\python.exe tools\strata_bench.py --url http://127.0.0.1:8083 --out $env:TEMP\strata-bench`
    in `vendor\strata`; without `--out` the results land inside the submodule. VRAM taken by other
    programs lowers the numbers: when they differ from the old row, run the old version in the same
    session before calling it a regression. Put the numbers in *Tiers*.

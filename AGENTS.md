@@ -11,9 +11,8 @@ the update procedure.
   `<model>.<quant>.<VRAM>_VRAM_<RAM>_RAM.json`, after the hardware, never after a machine.
 - Paths inside Strata (`exe`, `cwd`, `lib_dirs`, `log`, `--expert-profile`, the vision `exe`)
   stay relative: the server starts in `vendor/strata`. Model paths stay absolute.
-- `"host": "0.0.0.0"` with `"api_key": "insecure"` is deliberate: other devices use the server.
-  Do not narrow the host, and keep the key: a fixed, public value, not a secret, that clients on
-  other devices send.
+- `"host": "0.0.0.0"` without an `api_key` is deliberate: other devices use the server, and
+  Strata only warns about the missing key. Do not narrow the host, and do not add a key.
 - `port` and `gpus_asked` stay out: the server reads neither. It ignores unknown keys silently, so
   check a new key against `vendor/strata/serve/server.py` before adding it.
 - Change a value only with a `tools/strata_bench.py` run before and after, on the same Strata
