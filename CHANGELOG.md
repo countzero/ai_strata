@@ -3,6 +3,15 @@
 This changelog follows [Common Changelog](https://common-changelog.org) and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-10-21
+
+_After pulling: run `git submodule update`, then `.\START-HERE.bat --update --yes --no-start` in `vendor\strata`, and install engine 0.1.47 by hand as in README -> Update Strata, step 5. Clients on other devices no longer need an API key._
+
+### Changed
+- Move Strata to v0.2.2 ([`1a19ef5`](https://github.com/countzero/ai_strata/commit/1a19ef5))
+- Serve both tiers without an API key ([`1d79902`](https://github.com/countzero/ai_strata/commit/1d79902))
+- Point the 24 GB VRAM tier at the model data on `E:` ([`1e7e54a`](https://github.com/countzero/ai_strata/commit/1e7e54a))
+
 ## [1.1.0] - 2026-10-20
 
 _After pulling: run `git submodule update`, then `.\START-HERE.bat --update --yes --no-start` in `vendor\strata`, and install engine 0.1.46 by hand as in README -> Update Strata, step 5. Clients on other devices now send `Authorization: Bearer insecure`._
@@ -26,5 +35,6 @@ _Initial release._
 - Pin Strata v0.1.44.1 as the submodule `vendor/strata` ([`83cf904`](https://github.com/countzero/ai_strata/commit/83cf904))
 - Add the agent rules and the plan-review and release skills ([`3b12a27`](https://github.com/countzero/ai_strata/commit/3b12a27), [`ed51fa6`](https://github.com/countzero/ai_strata/commit/ed51fa6))
 
+[1.2.0]: https://github.com/countzero/ai_strata/releases/tag/v1.2.0
 [1.1.0]: https://github.com/countzero/ai_strata/releases/tag/v1.1.0
 [1.0.0]: https://github.com/countzero/ai_strata/releases/tag/v1.0.0
