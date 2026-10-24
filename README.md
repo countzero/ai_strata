@@ -19,7 +19,8 @@ and the server warns about it once at start.
 
 ## Tiers
 
-Medians of `tools\strata_bench.py` (default suite, 3 runs each) against a running server.
+Medians of `.\benchmark.ps1` (Strata's `tools\strata_bench.py`, default suite, 3 runs each)
+against a running server.
 
 | Tier file                                                      | Hardware                                                                     | Strata    | Chat decode | 16K prompt   | Agent decode | Agent cache hit |
 | -------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------- | ----------- | ------------ | ------------ | --------------- |
@@ -43,7 +44,8 @@ decode, 2627 tok/s 16K prompt and 56.8 tok/s agent decode.
 
 1. Stop the server, then `git pull` and `git submodule update --init`.
 2. Read the new versions' notices in `CHANGELOG.md` and do what they say, such as
-   `.\START-HERE.bat --update --yes --no-start` in `vendor\strata`.
+   `.\update_strata.ps1 -version (git -C vendor\strata describe --tags)`, which installs the
+   engine and the Python packages of the pinned version.
 3. Start the server.
 
 ## Update Strata
@@ -51,30 +53,22 @@ decode, 2627 tok/s 16K prompt and 56.8 tok/s agent decode.
 Never run Strata's `UPDATE.bat`: it pulls `main` and leaves the pinned version.
 
 1. Stop the server.
-2. Pick the version: `git -C vendor\strata fetch --tags --force`, then
-   `git -C vendor\strata tag --sort=-v:refname | Select-Object -First 5`. Read its release notes.
-   Without `--force` the fetch stops at upstream's rewritten older tags and shows no new one.
-3. `git -C vendor\strata checkout <tag>`
-4. In `vendor\strata`: `.\START-HERE.bat --update --yes --no-start`. This updates the Python
-   packages and setup's own `strata-*.json`, not the engine: setup replaces only one older than
-   its minimum, and then compiles it on Windows, which fails.
-5. Install the engine by hand, in `vendor\strata`. A point release (v0.2.1.3) has no release page;
-   its engine is on the base release's (v0.2.1):
-   `gh release download <release> -R Niko1221/Strata -p "strata-engine-*-windows-x86_64-cuda-cuda13.tar.gz" -p SHA256SUMS.txt -D <temp folder>`.
-   Check the package's SHA-256 against `SHA256SUMS.txt`, move the files of `engine\` into
-   `engine\.previous\` (emptied first), unpack the package into `engine\`, and check
-   `engine\strata.exe --version`.
-6. Compare setup's config with the tier file:
+2. `.\update_strata.ps1`, or `.\update_strata.ps1 -version <tag|commit|HEAD>`. Without `-version`
+   it takes the newest tag without a suffix such as `-beta`. It checks out the version in
+   `vendor\strata`, installs the engine of the matching release into `engine\` (the old one goes to
+   `engine\.previous\`) and runs setup's `--update` for the Python packages and setup's own
+   `strata-*.json`. Read the release notes it links. `HEAD` gets the engine of the newest release
+   before it, which can be older than `main` expects.
+3. Compare setup's config with the tier file:
    `git diff --no-index presets\<tier>.json vendor\strata\strata-unsloth-ud-iq4_xs.json`.
    Ignore the path differences (relative here, absolute there). Carry over new or changed flags,
    and `lib_dirs`: a renamed CUDA folder there fails silently, and the engine then stops
    without naming the missing DLL.
-7. Start, check that the model loads, and run
-   `.\.venv\Scripts\python.exe tools\strata_bench.py --url http://127.0.0.1:8083 --out $env:TEMP\strata-bench`
-   in `vendor\strata`; without `--out` the results land inside the submodule. VRAM taken by other
+4. Start, check that the model loads, and run `.\benchmark.ps1`. It writes to
+   `.tmp\bench\<tag>_engine-<version>\` and prints the numbers for *Tiers*;
+   `-compare .tmp\bench\<older folder>` puts an earlier run beside it. VRAM taken by other
    programs lowers the numbers: when they differ from the old row, run the old version in the same
    session before calling it a regression. Put the numbers in *Tiers*.
-8. `git add vendor/strata presets README.md` and commit as "Update Strata to <tag>".
+5. `git add vendor/strata presets README.md` and commit as "Update Strata to <tag>".
 
-Rollback: `git checkout <last commit> -- vendor/strata presets`, `git submodule update`, then copy
-`engine\.previous\` back into `engine\`.
+Rollback: `git checkout <last commit> -- presets`, then `.\update_strata.ps1 -version <old tag>`.

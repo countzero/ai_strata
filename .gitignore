@@ -1,2 +1,5 @@
 # The web app's Chat settings, written next to the config on every change.
 *.shared-settings.json
+
+# Local scratch directory for agent-generated artifacts and benchmark results.
+.tmp/
