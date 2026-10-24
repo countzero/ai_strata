@@ -3,6 +3,18 @@
 This changelog follows [Common Changelog](https://common-changelog.org) and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-10-24
+
+_After pulling: stop the server and run `.\update_strata.ps1 -version v0.2.4.2` in PowerShell 7. It installs engine 0.1.48 and Strata's Python packages._
+
+### Changed
+- Move Strata to v0.2.4.2 ([`2b026ea`](https://github.com/countzero/ai_strata/commit/2b026ea))
+- Set `--ple-io ram` in the 16 GB + 8 GB VRAM tier ([`9f99f14`](https://github.com/countzero/ai_strata/commit/9f99f14))
+
+### Added
+- Add `update_strata.ps1`, which moves Strata to a tag, a commit or HEAD and installs the engine of the matching release ([`4e6e8e6`](https://github.com/countzero/ai_strata/commit/4e6e8e6))
+- Add `benchmark.ps1`, which measures the running server and prints the numbers for README -> Tiers ([`4e6e8e6`](https://github.com/countzero/ai_strata/commit/4e6e8e6))
+
 ## [1.2.0] - 2026-10-21
 
 _After pulling: run `git submodule update`, then `.\START-HERE.bat --update --yes --no-start` in `vendor\strata`, and install engine 0.1.47 by hand as in README -> Update Strata, step 5. Clients on other devices no longer need an API key._
@@ -35,6 +47,7 @@ _Initial release._
 - Pin Strata v0.1.44.1 as the submodule `vendor/strata` ([`83cf904`](https://github.com/countzero/ai_strata/commit/83cf904))
 - Add the agent rules and the plan-review and release skills ([`3b12a27`](https://github.com/countzero/ai_strata/commit/3b12a27), [`ed51fa6`](https://github.com/countzero/ai_strata/commit/ed51fa6))
 
+[1.3.0]: https://github.com/countzero/ai_strata/releases/tag/v1.3.0
 [1.2.0]: https://github.com/countzero/ai_strata/releases/tag/v1.2.0
 [1.1.0]: https://github.com/countzero/ai_strata/releases/tag/v1.1.0
 [1.0.0]: https://github.com/countzero/ai_strata/releases/tag/v1.0.0
