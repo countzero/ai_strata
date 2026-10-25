@@ -3,6 +3,12 @@
 This changelog follows [Common Changelog](https://common-changelog.org) and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-10-25
+
+### Added
+- Add `start.ps1`, which checks the tier file's paths and the port, then starts the server from `vendor\strata` ([`376233e`](https://github.com/countzero/ai_strata/commit/376233e))
+- Add `experiment.ps1`, which measures a tier at 512K and 1M context and with two requests at once ([`b3ec8c5`](https://github.com/countzero/ai_strata/commit/b3ec8c5), [`d27a2bc`](https://github.com/countzero/ai_strata/commit/d27a2bc))
+
 ## [1.3.0] - 2026-10-24
 
 _After pulling: stop the server and run `.\update_strata.ps1 -version v0.2.4.2` in PowerShell 7. It installs engine 0.1.48 and Strata's Python packages._
@@ -47,6 +53,7 @@ _Initial release._
 - Pin Strata v0.1.44.1 as the submodule `vendor/strata` ([`83cf904`](https://github.com/countzero/ai_strata/commit/83cf904))
 - Add the agent rules and the plan-review and release skills ([`3b12a27`](https://github.com/countzero/ai_strata/commit/3b12a27), [`ed51fa6`](https://github.com/countzero/ai_strata/commit/ed51fa6))
 
+[1.4.0]: https://github.com/countzero/ai_strata/releases/tag/v1.4.0
 [1.3.0]: https://github.com/countzero/ai_strata/releases/tag/v1.3.0
 [1.2.0]: https://github.com/countzero/ai_strata/releases/tag/v1.2.0
 [1.1.0]: https://github.com/countzero/ai_strata/releases/tag/v1.1.0
