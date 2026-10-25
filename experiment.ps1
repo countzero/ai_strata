@@ -322,7 +322,8 @@ function Invoke-Arm {
         $benchArguments = if ($settings.parallel) { @("--clients", "$($settings.parallel)") } else { @() }
         $benchPath = Join-Path $armPath "bench"
 
-        & $benchmarkScript -url $url -out $benchPath -arguments $benchArguments
+        # Out-Host: their output would otherwise become this function's return value.
+        & $benchmarkScript -url $url -out $benchPath -arguments $benchArguments | Out-Host
 
         $resultsPath = Get-ChildItem -Path $benchPath -Filter "results.json" -Recurse -File |
             Sort-Object -Property "LastWriteTime" -Descending |
@@ -342,7 +343,7 @@ function Invoke-Arm {
         if ($settings.needles) {
             $needlePath = Join-Path $armPath "needles.json"
 
-            & $python $needleScript --url $url --lengths $settings.needles --depths $settings.depths --out $needlePath
+            & $python $needleScript --url $url --lengths $settings.needles --depths $settings.depths --out $needlePath | Out-Host
 
             if (Test-Path -Path $needlePath) {
                 $needles = @(Get-Content -Raw -Path $needlePath | ConvertFrom-Json)

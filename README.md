@@ -31,6 +31,14 @@ The 24 GB row was measured with about 1 GB of VRAM taken by other programs at st
 gave 73.5 tok/s chat decode, 2701 tok/s 16K prompt and 57.0 tok/s agent decode on a free card,
 in an earlier session; it was not rerun beside v0.2.4.2.
 
+## Try another context or parallel requests
+
+`.\experiment.ps1 -tier <tier>` measures the tier in five arms (as it is, 512K, two requests at
+once, both, and 1M with two at once). It stops the server on port 8083 after 10 seconds (Ctrl+C
+cancels), runs each arm from a throwaway config under `.tmp\bench\experiment-<date>\` on
+`127.0.0.1`, and starts the tier again at the end. `-check` only builds and checks the configs;
+`-arms baseline,512k` runs a part. `summary.md` in the run folder holds the table.
+
 ## New machine
 
 1. `git clone --recurse-submodules <url of this repository> <repo>`
