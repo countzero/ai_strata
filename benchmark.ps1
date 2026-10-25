@@ -14,6 +14,10 @@ The server is neither started nor stopped: start it as README.md -> Usage says.
 .PARAMETER url
 The address of the running server.
 
+.PARAMETER out
+The folder to write the results to, instead of
+.tmp/bench/<Strata tag>_engine-<version>/.
+
 .PARAMETER compare
 An earlier results folder to print beside this run, for example
 .tmp\bench\v0.2.2_engine-0.1.47. A folder that holds several runs uses the
@@ -41,6 +45,9 @@ Shows the manual on how to use this script.
 Param (
     [String]
     $url = "http://127.0.0.1:8083",
+
+    [String]
+    $out,
 
     [String]
     $compare,
@@ -111,7 +118,11 @@ try {
 
 $strataVersion = git -C $strataPath describe --tags --always
 $engineVersion = (Get-Content -Raw -Path (Join-Path $strataPath "engine\BUILD.json") | ConvertFrom-Json).version
-$outPath = Join-Path $PSScriptRoot ".tmp\bench\${strataVersion}_engine-${engineVersion}"
+$outPath = if ($out) {
+    [System.IO.Path]::GetFullPath($out, (Get-Location).Path)
+} else {
+    Join-Path $PSScriptRoot ".tmp\bench\${strataVersion}_engine-${engineVersion}"
+}
 
 New-Item -Path $outPath -ItemType "directory" -Force | Out-Null
 
