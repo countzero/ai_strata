@@ -6,14 +6,24 @@ file names their paths.
 
 ## Usage
 
-Start the server:
+Start the server in PowerShell 7:
+
+```
+.\start.ps1 -tier <tier>
+```
+
+It runs the server in this window on port 8083 (`-port` picks another) until Ctrl+C. It first
+checks that every path the tier file names exists and that no other server, such as Basalt, holds
+the port; it never stops that server. `.\start.ps1 -help` shows the options.
+
+The script starts the server from `vendor\strata`, where the tier file's relative paths resolve.
+By hand that is:
 
 ```
 pwsh -NoExit -wd <repo>\vendor\strata -c ".\.venv\Scripts\python.exe serve\server.py --engine strata --config ..\..\presets\<tier>.json --port 8083"
 ```
 
-`<repo>` is where you cloned this repository. Paths inside Strata in a tier file are relative and
-only resolve when the server starts from `vendor\strata`. A tier file sets `"host": "0.0.0.0"`, so
+`<repo>` is where you cloned this repository. A tier file sets `"host": "0.0.0.0"`, so
 every device on the network can use the server. A tier file sets no API key: clients need none,
 and the server warns about it once at start.
 

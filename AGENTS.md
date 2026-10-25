@@ -3,8 +3,9 @@
 Shares one Strata setup between machines: Strata as the submodule `vendor/strata`, pinned to a
 release tag, and one run config per hardware tier in `presets/`. Nothing here is built or tested.
 `update_strata.ps1` moves the submodule to a Strata version and installs that release's engine;
-`benchmark.ps1` measures the running server. `README.md` -> *Usage* holds the start command, the
-other sections the steps for a new machine and the update procedure.
+`benchmark.ps1` measures the running server; `start.ps1` starts it with a tier file. `README.md` ->
+*Usage* holds the start command, the other sections the steps for a new machine and the update
+procedure.
 
 ## Tier files
 
