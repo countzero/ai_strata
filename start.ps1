@@ -15,7 +15,8 @@ another server: stop it yourself, it may have clients.
 
 .PARAMETER tier
 The tier file: its name in presets\ (with or without .json) or a path.
-Defaults to the only tier file in presets\.
+Defaults to the only tier file in presets\; when presets\ holds more than
+one, offers them as a numbered list to choose from.
 
 .PARAMETER port
 The port to listen on.
@@ -48,6 +49,43 @@ if ($help) {
 
 $ErrorActionPreference = "Stop"
 
+function Select-Tier {
+    $tiers = @(Get-ChildItem -Path $presetsPath -Filter "*.json" -File | Sort-Object Name)
+
+    if ($tiers.Count -eq 0) {
+        throw "No tier file in presets\: README.md -> Tiers explains how to make one."
+    }
+
+    Write-Host ""
+    Write-Host "Choose a tier file:" -ForegroundColor "Yellow"
+    for ($i = 0; $i -lt $tiers.Count; $i++) {
+        Write-Host "  [$($i + 1)] $($tiers[$i].BaseName)"
+    }
+
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        $answer = Read-Host "Which tier? (number or name, empty to cancel)"
+
+        if (-not $answer -or $answer -eq "q") {
+            Write-Host "Aborted: no tier chosen." -ForegroundColor "Red"
+            exit 1
+        }
+
+        $choice = if ($answer -match '^\d+$') {
+            $index = [int]$answer
+            if ($index -ge 1 -and $index -le $tiers.Count) { $tiers[$index - 1] }
+        } else {
+            $name = $answer -replace '\.json$', ''
+            @($tiers | Where-Object { $_.BaseName -ieq $name })[0]
+        }
+
+        if ($choice) { return $choice }
+        Write-Host "Not a tier on the list, try again." -ForegroundColor "Red"
+    }
+
+    Write-Host "Aborted: no tier chosen." -ForegroundColor "Red"
+    exit 1
+}
+
 $presetsPath = Join-Path $PSScriptRoot "presets"
 $strataPath = Join-Path $PSScriptRoot "vendor\strata"
 $python = Join-Path $strataPath ".venv\Scripts\python.exe"
@@ -60,18 +98,18 @@ if (!$tier) {
     $tiers = @(Get-ChildItem -Path $presetsPath -Filter "*.json" -File)
 
     if ($tiers.Count -ne 1) {
-        $list = ($tiers | ForEach-Object { "  $($_.BaseName)" }) -join "`n"
-        throw "Name the tier file with -tier:`n${list}"
+        $configPath = (Select-Tier).FullName
+    } else {
+        $configPath = $tiers[0].FullName
     }
-
-    $configPath = $tiers[0].FullName
 } elseif (Test-Path -Path $tier -PathType "Leaf") {
     $configPath = (Resolve-Path -Path $tier).Path
 } else {
     $configPath = Join-Path $presetsPath "$($tier -replace '\.json$', '').json"
 
     if (-not (Test-Path -Path $configPath)) {
-        throw "No tier file '${tier}' in presets\."
+        Write-Host "No tier file '${tier}' in presets\." -ForegroundColor "Red"
+        $configPath = (Select-Tier).FullName
     }
 }
 
