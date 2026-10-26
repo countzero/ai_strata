@@ -35,11 +35,12 @@ against a running server.
 | Tier file                                                      | Hardware                                                                     | Strata    | Chat decode | 16K prompt   | Agent decode | Agent cache hit |
 | -------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------- | ----------- | ------------ | ------------ | --------------- |
 | `qwen3.8-flash-next.unsloth-ud-iq4_xs.24GB_VRAM_192GB_RAM`     | RTX PRO 5000 Blackwell Laptop 24 GB, 192 GB RAM, 24 cores                    | v0.2.4.2  | 73.6 tok/s  | 2555 tok/s   | 50.0 tok/s   | 69.5 %          |
-| `qwen3.8-flash-next.unsloth-ud-iq4_xs.16GB_8GB_VRAM_128GB_RAM` | RTX 4070 Ti SUPER 16 GB + RTX 2060 SUPER 8 GB (vision), 128 GB RAM, 16 cores | v0.2.2    | 50.3 tok/s  | 2930 tok/s   | 52.7 tok/s   | 69.7 %          |
+| `qwen3.8-flash-next.unsloth-ud-iq4_xs.16GB_8GB_VRAM_128GB_RAM` | RTX 4070 Ti SUPER 16 GB + RTX 2060 SUPER 8 GB (vision), 128 GB RAM, 16 cores | v0.2.6    | 50.3 tok/s  | 2930 tok/s   | 52.7 tok/s   | 69.7 %          |
 
 The 24 GB row was measured with about 1 GB of VRAM taken by other programs at start. v0.2.2
 gave 73.5 tok/s chat decode, 2701 tok/s 16K prompt and 57.0 tok/s agent decode on a free card,
-in an earlier session; it was not rerun beside v0.2.4.2.
+in an earlier session; it was not rerun beside v0.2.4.2. The 16 GB row names the Strata version
+its machine runs; its numbers were measured on v0.2.2 and were not rerun on v0.2.6.
 
 ## Try another context or parallel requests
 
