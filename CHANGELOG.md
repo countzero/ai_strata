@@ -3,6 +3,11 @@
 This changelog follows [Common Changelog](https://common-changelog.org) and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] - 2026-10-26
+
+### Changed
+- Choose the tier with a cursor menu in `start.ps1`: arrows move, Enter picks, a digit jumps, the chosen row stays green; typed input still works when piped or when the terminal refuses the cursor API ([`09a87c7`](https://github.com/countzero/ai_strata/commit/09a87c7))
+
 ## [1.5.0] - 2026-10-26
 
 _After pulling: run `git submodule update` and `.\update_strata.ps1 -version v0.2.6`. It installs engine 0.1.50 and Strata's Python packages._
@@ -63,6 +68,7 @@ _Initial release._
 - Pin Strata v0.1.44.1 as the submodule `vendor/strata` ([`83cf904`](https://github.com/countzero/ai_strata/commit/83cf904))
 - Add the agent rules and the plan-review and release skills ([`3b12a27`](https://github.com/countzero/ai_strata/commit/3b12a27), [`ed51fa6`](https://github.com/countzero/ai_strata/commit/ed51fa6))
 
+[1.5.1]: https://github.com/countzero/ai_strata/releases/tag/v1.5.1
 [1.5.0]: https://github.com/countzero/ai_strata/releases/tag/v1.5.0
 [1.4.0]: https://github.com/countzero/ai_strata/releases/tag/v1.4.0
 [1.3.0]: https://github.com/countzero/ai_strata/releases/tag/v1.3.0
