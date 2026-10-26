@@ -3,6 +3,16 @@
 This changelog follows [Common Changelog](https://common-changelog.org) and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-10-26
+
+_After pulling: run `git submodule update` and `.\update_strata.ps1 -version v0.2.6`. It installs engine 0.1.50 and Strata's Python packages._
+
+### Changed
+- Move Strata to v0.2.6 ([`0cf1f61`](https://github.com/countzero/ai_strata/commit/0cf1f61))
+
+### Added
+- Choose the tier from a numbered list when `start.ps1` is run without `-tier` or with a name that does not exist ([`f40abe4`](https://github.com/countzero/ai_strata/commit/f40abe4))
+
 ## [1.4.0] - 2026-10-25
 
 ### Added
@@ -53,6 +63,7 @@ _Initial release._
 - Pin Strata v0.1.44.1 as the submodule `vendor/strata` ([`83cf904`](https://github.com/countzero/ai_strata/commit/83cf904))
 - Add the agent rules and the plan-review and release skills ([`3b12a27`](https://github.com/countzero/ai_strata/commit/3b12a27), [`ed51fa6`](https://github.com/countzero/ai_strata/commit/ed51fa6))
 
+[1.5.0]: https://github.com/countzero/ai_strata/releases/tag/v1.5.0
 [1.4.0]: https://github.com/countzero/ai_strata/releases/tag/v1.4.0
 [1.3.0]: https://github.com/countzero/ai_strata/releases/tag/v1.3.0
 [1.2.0]: https://github.com/countzero/ai_strata/releases/tag/v1.2.0
