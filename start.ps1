@@ -16,7 +16,8 @@ another server: stop it yourself, it may have clients.
 .PARAMETER tier
 The tier file: its name in presets\ (with or without .json) or a path.
 Defaults to the only tier file in presets\; when presets\ holds more than
-one, offers them as a numbered list to choose from.
+one, offers them as a list to choose from with the arrow keys (a typed
+number or name when its input is piped).
 
 .PARAMETER port
 The port to listen on.
@@ -49,19 +50,10 @@ if ($help) {
 
 $ErrorActionPreference = "Stop"
 
-function Select-Tier {
-    $tiers = @(Get-ChildItem -Path $presetsPath -Filter "*.json" -File | Sort-Object Name)
+function Select-TierTyped {
+    param ([array] $Tiers)
 
-    if ($tiers.Count -eq 0) {
-        throw "No tier file in presets\: README.md -> Tiers explains how to make one."
-    }
-
-    Write-Host ""
-    Write-Host "Choose a tier file:" -ForegroundColor "Yellow"
-    for ($i = 0; $i -lt $tiers.Count; $i++) {
-        Write-Host "  [$($i + 1)] $($tiers[$i].BaseName)"
-    }
-
+    # A typed number or name: the menu's form when its input is piped or its cursor cannot be drawn.
     for ($attempt = 1; $attempt -le 3; $attempt++) {
         $answer = Read-Host "Which tier? (number or name, empty to cancel)"
 
@@ -72,10 +64,10 @@ function Select-Tier {
 
         $choice = if ($answer -match '^\d+$') {
             $index = [int]$answer
-            if ($index -ge 1 -and $index -le $tiers.Count) { $tiers[$index - 1] }
+            if ($index -ge 1 -and $index -le $Tiers.Count) { $Tiers[$index - 1] }
         } else {
             $name = $answer -replace '\.json$', ''
-            @($tiers | Where-Object { $_.BaseName -ieq $name })[0]
+            @($Tiers | Where-Object { $_.BaseName -ieq $name })[0]
         }
 
         if ($choice) { return $choice }
@@ -84,6 +76,114 @@ function Select-Tier {
 
     Write-Host "Aborted: no tier chosen." -ForegroundColor "Red"
     exit 1
+}
+
+function Select-Tier {
+    $tiers = @(Get-ChildItem -Path $presetsPath -Filter "*.json" -File | Sort-Object Name)
+
+    if ($tiers.Count -eq 0) {
+        throw "No tier file in presets\: README.md -> Tiers explains how to make one."
+    }
+
+    Write-Host ""
+    Write-Host "Choose a tier file:" -ForegroundColor "Yellow"
+    Write-Host ""
+
+    $width = ($tiers | ForEach-Object { $_.BaseName.Length } | Measure-Object -Maximum).Maximum + 2
+
+    # The menu paints over its rows, so it needs a real keyboard and no wrapped lines.
+    # Otherwise print the list plain and type the answer.
+    $menuWays = -not [Console]::IsInputRedirected -and
+                -not [Console]::IsOutputRedirected -and
+                $width -le [Console]::WindowWidth
+
+    if (-not $menuWays) {
+        for ($i = 0; $i -lt $tiers.Count; $i++) {
+            Write-Host "  [$($i + 1)] $($tiers[$i].BaseName)"
+        }
+
+        Write-Host ""
+        return Select-TierTyped $tiers
+    }
+
+    # Cursor menu: arrows move, Enter picks, a digit jumps, q or Esc cancels.
+    # Anchor on the cursor, not on Console.Top: Top is the window's first visible
+    # row, the cursor is where these rows actually print.
+    $row0 = [Console]::CursorTop
+
+    for ($i = 0; $i -lt $tiers.Count; $i++) {
+        Write-Host ("  $($tiers[$i].BaseName)".PadRight($width))
+    }
+
+    $paint = {
+        param ($i, $on)
+        [Console]::SetCursorPosition(0, $row0 + $i)
+        $mark = if ($on) { ">" } else { " " }
+        $line = ("$mark $($tiers[$i].BaseName)").PadRight($width)
+        if ($on) { Write-Host $line -ForegroundColor "Yellow" } else { Write-Host $line }
+    }
+
+    $pick = 0
+    $shown = -1
+    $chosen = $null
+
+    try {
+        [Console]::CursorVisible = $false
+
+        while (-not $chosen) {
+            if ($shown -ge 0) { & $paint $shown $false }
+            & $paint $pick $true
+            $shown = $pick
+
+            $key = [Console]::ReadKey($true)
+
+            switch ($key.Key) {
+                UpArrow { if ($pick -gt 0) { $pick-- } }
+                DownArrow { if ($pick -lt $tiers.Count - 1) { $pick++ } }
+                Enter { $chosen = $tiers[$pick] }
+                Escape { $chosen = "quit" }
+                Default {
+                    if ($key.KeyChar -in "q", "Q") {
+                        $chosen = "quit"
+                    } elseif ($key.KeyChar -match '^[1-9]$') {
+                        $index = [int][string]$key.KeyChar - 1
+                        if ($index -lt $tiers.Count) {
+                            $pick = $index
+                            $chosen = $tiers[$index]
+                        }
+                    }
+                }
+            }
+        }
+    } catch {
+        # A terminal that refuses the cursor API: fall back to the typed prompt.
+        Write-Host ""
+        Write-Host "Menu unavailable ($_): typing instead." -ForegroundColor "Yellow"
+        return Select-TierTyped $tiers
+    } finally {
+        try { [Console]::CursorVisible = $true } catch { }
+    }
+
+    # The choice stands: keep the picked row, in green, and clear the rest.
+    try {
+        for ($i = 0; $i -lt $tiers.Count; $i++) {
+            [Console]::SetCursorPosition(0, $row0 + $i)
+            if ($chosen -ne "quit" -and $i -eq $pick) {
+                Write-Host ("> $($tiers[$i].BaseName)".PadRight($width)) -ForegroundColor "Green"
+            } else {
+                Write-Host (" " * $width)
+            }
+        }
+        [Console]::SetCursorPosition(0, $row0 + $tiers.Count)
+    } catch { }
+    Write-Host ""
+
+    if ($chosen -eq "quit") {
+        Write-Host "Aborted: no tier chosen." -ForegroundColor "Red"
+        exit 1
+    }
+
+    return $chosen
 }
 
 $presetsPath = Join-Path $PSScriptRoot "presets"
