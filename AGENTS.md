@@ -19,6 +19,9 @@ procedure.
   check a new key against `vendor/strata/serve/server.py` before adding it.
 - Change a value only with a `benchmark.ps1` run before and after, on the same Strata version.
   The numbers go into `README.md` -> *Tiers* and into the commit message.
+- Monitors stay on the GPU they are plugged into, even when the display takes VRAM from the
+  engine's card. Do not suggest moving them, and do not ask about it: tune within the hardware as
+  it is.
 
 ## Strata
 
