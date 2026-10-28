@@ -2,7 +2,7 @@
 
 <#
 .SYNOPSIS
-Measure a tier with a longer context and with parallel requests.
+Measure a tier with a longer context, with parallel requests or with speed flags.
 
 .DESCRIPTION
 Takes the server port over: unloads and stops the running server, then starts
@@ -17,6 +17,11 @@ The configs, the server and engine logs, the results and summary.md go to
 
 Arms:
   baseline   the tier as it is
+  draftvocab --mtp-draft-vocab data\draft_vocab_en.bin
+  cpuexact   STRATA_CPU_IQ_ALL_EXACT1=1
+  workers15  --pool-workers 15
+  pffused    STRATA_PF_FUSED=1
+  prefill16k --prefill auto:16384
   512k       --max-context 524288, YaRN factor 2; needles at 128K and 480K
   parallel2  "parallel": 2 and --batch-mtp; 2 requests at once
   combo512k  512k and parallel2
@@ -27,7 +32,12 @@ The tier file in presets/ without .json. It must be the one the running server
 uses, because the script starts it again at the end.
 
 .PARAMETER arms
-The arms to run, in the order above.
+The arms to run, in the order above. Defaults to baseline and the context and
+parallel arms; the speed arms run only when named.
+
+.PARAMETER runs
+Runs per benchmark test, passed on as --runs. Defaults to the benchmark's 3.
+Speed arms need more, as their gains are near the run-to-run spread.
 
 .PARAMETER port
 The server port.
@@ -46,6 +56,9 @@ Shows the manual on how to use this script.
 
 .EXAMPLE
 .\experiment.ps1 -tier qwen3.8-flash-next.unsloth-ud-iq4_xs.24GB_VRAM_192GB_RAM -arms baseline,512k
+
+.EXAMPLE
+.\experiment.ps1 -tier qwen3.8-flash-next.unsloth-ud-iq4_xs.16GB_8GB_VRAM_128GB_RAM -arms baseline,draftvocab,cpuexact,workers15 -runs 5
 #>
 
 [CmdletBinding(PositionalBinding = $false)]
@@ -53,9 +66,12 @@ Param (
     [String]
     $tier,
 
-    [ValidateSet("baseline", "512k", "parallel2", "combo512k", "combo1m")]
+    [ValidateSet("baseline", "draftvocab", "cpuexact", "workers15", "pffused", "prefill16k", "512k", "parallel2", "combo512k", "combo1m")]
     [String[]]
     $arms = @("baseline", "512k", "parallel2", "combo512k", "combo1m"),
+
+    [Int]
+    $runs = 0,
 
     [Int]
     $port = 8083,
@@ -83,14 +99,19 @@ $needleScript = Join-Path $strataPath "tools\needle_bench.py"
 $url = "http://127.0.0.1:${port}"
 $invariant = [System.Globalization.CultureInfo]::InvariantCulture
 
-$armOrder = @("baseline", "512k", "parallel2", "combo512k", "combo1m")
+$armOrder = @("baseline", "draftvocab", "cpuexact", "workers15", "pffused", "prefill16k", "512k", "parallel2", "combo512k", "combo1m")
 
 $armSettings = @{
-    "baseline"  = @{ context = 0;       scale = 0; parallel = 0; needles = $null;       depths = $null }
-    "512k"      = @{ context = 524288;  scale = 2; parallel = 0; needles = "128k,480k"; depths = "10,50,90" }
-    "parallel2" = @{ context = 0;       scale = 0; parallel = 2; needles = $null;       depths = $null }
-    "combo512k" = @{ context = 524288;  scale = 2; parallel = 2; needles = $null;       depths = $null }
-    "combo1m"   = @{ context = 1048576; scale = 4; parallel = 2; needles = "960k";      depths = "50" }
+    "baseline"   = @{ context = 0;       scale = 0; parallel = 0; needles = $null;       depths = $null }
+    "draftvocab" = @{ args = @{ "--mtp-draft-vocab" = "data\draft_vocab_en.bin" } }
+    "cpuexact"   = @{ env = @{ "STRATA_CPU_IQ_ALL_EXACT1" = "1" } }
+    "workers15"  = @{ args = @{ "--pool-workers" = "15" } }
+    "pffused"    = @{ env = @{ "STRATA_PF_FUSED" = "1" } }
+    "prefill16k" = @{ args = @{ "--prefill" = "auto:16384" } }
+    "512k"       = @{ context = 524288;  scale = 2; parallel = 0; needles = "128k,480k"; depths = "10,50,90" }
+    "parallel2"  = @{ context = 0;       scale = 0; parallel = 2; needles = $null;       depths = $null }
+    "combo512k"  = @{ context = 524288;  scale = 2; parallel = 2; needles = $null;       depths = $null }
+    "combo1m"    = @{ context = 1048576; scale = 4; parallel = 2; needles = "960k";      depths = "50" }
 }
 
 function Set-Argument {
@@ -139,6 +160,22 @@ function New-ArmConfig {
     if ($settings.parallel) {
         Set-Argument -list $argumentList -name "--batch-mtp" -value ""
         $config | Add-Member -NotePropertyName "parallel" -NotePropertyValue $settings.parallel -Force
+    }
+
+    if ($settings.args) {
+        foreach ($name in $settings.args.Keys) {
+            Set-Argument -list $argumentList -name $name -value $settings.args[$name]
+        }
+    }
+
+    if ($settings.env) {
+        if (-not $config.env) {
+            $config | Add-Member -NotePropertyName "env" -NotePropertyValue ([pscustomobject]@{}) -Force
+        }
+
+        foreach ($name in $settings.env.Keys) {
+            $config.env | Add-Member -NotePropertyName $name -NotePropertyValue $settings.env[$name] -Force
+        }
     }
 
     $config.args = $argumentList.ToArray()
@@ -319,7 +356,12 @@ function Invoke-Arm {
         $row["Context"] = $health.max_context
         $row["Slots"] = (Invoke-RestMethod -Uri "${url}/v1/status" -TimeoutSec 10).concurrency.serving
 
-        $benchArguments = if ($settings.parallel) { @("--clients", "$($settings.parallel)") } else { @() }
+        $benchArguments = @(if ($settings.parallel) { "--clients", "$($settings.parallel)" })
+
+        if ($runs) {
+            $benchArguments += @("--runs", "$runs")
+        }
+
         $benchPath = Join-Path $armPath "bench"
 
         # Out-Host: their output would otherwise become this function's return value.
@@ -411,7 +453,7 @@ if ($check) {
 $strataVersion = git -C $strataPath describe --tags --always
 $engineVersion = (Get-Content -Raw -Path (Join-Path $strataPath "engine\BUILD.json") | ConvertFrom-Json).version
 
-Write-Host "The server on port ${port} stops in 10 seconds and is down for about an hour. Ctrl+C cancels." -ForegroundColor "Yellow"
+Write-Host "The server on port ${port} stops in 10 seconds and is down until the arms finish (5 to 15 minutes each). Ctrl+C cancels." -ForegroundColor "Yellow"
 Start-Sleep -Seconds 10
 
 $rows = [System.Collections.Generic.List[object]]::new()

@@ -51,6 +51,10 @@ cancels), runs each arm from a throwaway config under `.tmp\bench\experiment-<da
 `127.0.0.1`, and starts the tier again at the end. `-check` only builds and checks the configs;
 `-arms baseline,512k` runs a part. `summary.md` in the run folder holds the table.
 
+Speed arms run only when named: `draftvocab`, `cpuexact`, `workers15`, `pffused` and
+`prefill16k` (`.\experiment.ps1 -help` lists their flags). Their gains are near the run-to-run
+spread, so run them beside `baseline` with `-runs 5`.
+
 ## New machine
 
 1. `git clone --recurse-submodules <url of this repository> <repo>`
