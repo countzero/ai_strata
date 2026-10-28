@@ -54,6 +54,12 @@ function Select-TierTyped {
     param ([array] $Tiers)
 
     # A typed number or name: the menu's form when its input is piped or its cursor cannot be drawn.
+    for ($i = 0; $i -lt $Tiers.Count; $i++) {
+        Write-Host "  [$($i + 1)] $($Tiers[$i].BaseName)"
+    }
+
+    Write-Host ""
+
     for ($attempt = 1; $attempt -le 3; $attempt++) {
         $answer = Read-Host "Which tier? (number or name, empty to cancel)"
 
@@ -95,25 +101,19 @@ function Select-Tier {
     # Otherwise print the list plain and type the answer.
     $menuWays = -not [Console]::IsInputRedirected -and
                 -not [Console]::IsOutputRedirected -and
-                $width -le [Console]::WindowWidth
+                $width -lt [Console]::WindowWidth
 
     if (-not $menuWays) {
-        for ($i = 0; $i -lt $tiers.Count; $i++) {
-            Write-Host "  [$($i + 1)] $($tiers[$i].BaseName)"
-        }
-
-        Write-Host ""
         return Select-TierTyped $tiers
     }
 
-    # Cursor menu: arrows move, Enter picks, a digit jumps, q or Esc cancels.
-    # Anchor on the cursor, not on Console.Top: Top is the window's first visible
-    # row, the cursor is where these rows actually print.
-    $row0 = [Console]::CursorTop
-
+    # Cursor menu: arrows move, Enter picks, a digit jumps, q, Esc or Ctrl+C cancels.
+    # Anchor on the cursor after the rows are printed: printing them may scroll the window.
     for ($i = 0; $i -lt $tiers.Count; $i++) {
         Write-Host ("  $($tiers[$i].BaseName)".PadRight($width))
     }
+
+    $row0 = [Console]::CursorTop - $tiers.Count
 
     $paint = {
         param ($i, $on)
@@ -126,8 +126,12 @@ function Select-Tier {
     $pick = 0
     $shown = -1
     $chosen = $null
+    $menuError = $null
+    $ctrlCAsInput = [Console]::TreatControlCAsInput
 
     try {
+        # Ctrl+C as a key: a stop request would wait inside ReadKey until the next key press.
+        [Console]::TreatControlCAsInput = $true
         [Console]::CursorVisible = $false
 
         while (-not $chosen) {
@@ -143,7 +147,9 @@ function Select-Tier {
                 Enter { $chosen = $tiers[$pick] }
                 Escape { $chosen = "quit" }
                 Default {
-                    if ($key.KeyChar -in "q", "Q") {
+                    if ($key.Key -eq "C" -and ($key.Modifiers -band [ConsoleModifiers]::Control)) {
+                        $chosen = "quit"
+                    } elseif ($key.KeyChar -in "q", "Q") {
                         $chosen = "quit"
                     } elseif ($key.KeyChar -match '^[1-9]$') {
                         $index = [int][string]$key.KeyChar - 1
@@ -156,12 +162,17 @@ function Select-Tier {
             }
         }
     } catch {
-        # A terminal that refuses the cursor API: fall back to the typed prompt.
-        Write-Host ""
-        Write-Host "Menu unavailable ($_): typing instead." -ForegroundColor "Yellow"
-        return Select-TierTyped $tiers
+        $menuError = $_
     } finally {
         try { [Console]::CursorVisible = $true } catch { }
+        try { [Console]::TreatControlCAsInput = $ctrlCAsInput } catch { }
+    }
+
+    if ($menuError) {
+        # A terminal that refuses the cursor API: fall back to the typed prompt, with Ctrl+C and the cursor restored.
+        Write-Host ""
+        Write-Host "Menu unavailable (${menuError}): typing instead." -ForegroundColor "Yellow"
+        return Select-TierTyped $tiers
     }
 
     # The choice stands: keep the picked row, in green, and clear the rest.
