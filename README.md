@@ -80,8 +80,8 @@ Never run Strata's `UPDATE.bat`: it pulls `main` and leaves the pinned version.
 1. Stop the server.
 2. `.\update_strata.ps1`, or `.\update_strata.ps1 -version <tag|commit|HEAD>`. Without `-version`
    it takes the newest tag without a suffix such as `-beta`. It checks out the version in
-   `vendor\strata`, installs the engine of the matching release into `engine\` (the old one goes to
-   `engine\.previous\`) and runs setup's `--update` for the Python packages and setup's own
+   `vendor\strata`, installs the engine the matching release names into `engine\` (the old one goes
+   to `engine\.previous\`) and runs setup's `--update` for the Python packages and setup's own
    `strata-*.json`. Read the release notes it links. `HEAD` gets the engine of the newest release
    before it, which can be older than `main` expects.
 3. Compare setup's config with the tier file:

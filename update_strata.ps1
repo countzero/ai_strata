@@ -6,7 +6,8 @@ Update the Strata submodule and its engine to a tag, a commit or HEAD.
 
 .DESCRIPTION
 Checks out the requested Strata version in vendor/strata, installs the
-ready-made engine of the matching GitHub release and runs Strata's own
+ready-made engine the matching GitHub release names (in its strata-feed.json,
+or as its own asset) and runs Strata's own
 "setup.py --update" for the Python packages and setup's model configs.
 
 Everything that can fail (the version, a running server, the download and
@@ -70,9 +71,11 @@ function Invoke-StrataGit {
     $output
 }
 
+# engine-component.json, not BUILD.json: every package has the manifest, and
+# BUILD.json only when its build left one.
 function Read-EngineVersion {
     Param ([String] $path)
-    (Get-Content -Raw -Path (Join-Path $path "BUILD.json") | ConvertFrom-Json).version
+    (Get-Content -Raw -Path (Join-Path $path "engine-component.json") | ConvertFrom-Json).version
 }
 
 function Test-Download {
@@ -183,31 +186,87 @@ while ($true) {
 # The engine that is installed names its own variant (cuda13, cuda12, hip-...).
 $component = Get-Content -Raw -Path $componentPath | ConvertFrom-Json
 
-$assetPattern = '^strata-engine-(?<version>\d+(\.\d+)+)-{0}-{1}-{2}\.tar\.gz$' -f `
-    [regex]::Escape($component.platform),
-    [regex]::Escape($component.backend),
-    [regex]::Escape($component.variant)
+# A release's strata-feed.json lists the engine packages, which since v0.2.14
+# can sit on an earlier release's page. A release without a feed carries its
+# engines as its own assets.
+$feedAsset = $release.assets | Where-Object { $_.name -eq "strata-feed.json" }
+$manifestHash = $null
 
-$asset = $release.assets |
-    Where-Object { $_.name -match $assetPattern } |
-    Sort-Object -Descending -Property { [version]([regex]::Match($_.name, $assetPattern).Groups["version"].Value) } |
-    Select-Object -First 1
+if ($feedAsset) {
+    if ($feedAsset.digest -notmatch '^sha256:[0-9a-f]{64}$') {
+        throw "GitHub lists no SHA-256 for the feed of ${releaseTag}, so it cannot be verified."
+    }
 
-if (!$asset) {
-    throw "The release ${releaseTag} has no engine matching ${assetPattern}."
+    $feedPath = Join-Path ([System.IO.Path]::GetTempPath()) "strata-feed-${releaseTag}.json"
+
+    Invoke-WebRequest -Uri $feedAsset.browser_download_url -OutFile $feedPath
+
+    if (-not (Test-Download -path $feedPath -asset $feedAsset)) {
+        Remove-Item -Path $feedPath -Force
+        throw "The feed of ${releaseTag} does not match GitHub's size and SHA-256."
+    }
+
+    $feed = Get-Content -Raw -Path $feedPath | ConvertFrom-Json
+    Remove-Item -Path $feedPath -Force
+
+    $package = $feed.engine.packages |
+        Where-Object {
+            $_.platform -eq $component.platform -and
+            $_.backend -eq $component.backend -and
+            $_.variant -eq $component.variant
+        } |
+        Sort-Object -Descending -Property { [version]$_.version } |
+        Select-Object -First 1
+
+    if (!$package) {
+        throw "The feed of ${releaseTag} lists no engine for $($component.platform)-$($component.backend)-$($component.variant)."
+    }
+
+    # A package URL is absolute, or relative to the feed's release.
+    $url = [Uri]::new([Uri]"https://github.com/${repository}/releases/download/${releaseTag}/", $package.url)
+
+    $asset = [PSCustomObject]@{
+        name                 = $url.Segments[-1]
+        size                 = $package.size
+        digest               = "sha256:$($package.sha256)"
+        browser_download_url = $url.AbsoluteUri
+    }
+    $engineVersion = $package.version
+    $manifestHash = $package.manifest_sha256
+    $hostTag = $url.Segments[-2].TrimEnd('/')
+    $engineSource = "feed of release ${releaseTag}" + $(if ($hostTag -ne $releaseTag) { ", hosted on ${hostTag}" })
+    $hashSource = "the feed's"
+
+} else {
+    $assetPattern = '^strata-engine-(?<version>\d+(\.\d+)+)-{0}-{1}-{2}\.tar\.gz$' -f `
+        [regex]::Escape($component.platform),
+        [regex]::Escape($component.backend),
+        [regex]::Escape($component.variant)
+
+    $asset = $release.assets |
+        Where-Object { $_.name -match $assetPattern } |
+        Sort-Object -Descending -Property { [version]([regex]::Match($_.name, $assetPattern).Groups["version"].Value) } |
+        Select-Object -First 1
+
+    if (!$asset) {
+        throw "The release ${releaseTag} has neither a strata-feed.json nor an engine matching ${assetPattern}."
+    }
+
+    $engineVersion = [regex]::Match($asset.name, $assetPattern).Groups["version"].Value
+    $engineSource = "release ${releaseTag}"
+    $hashSource = "GitHub's"
 }
 
 if ($asset.digest -notmatch '^sha256:[0-9a-f]{64}$') {
-    throw "GitHub lists no SHA-256 for $($asset.name), so it cannot be verified."
+    throw "Neither GitHub nor the feed lists a SHA-256 for $($asset.name), so it cannot be verified."
 }
 
-$engineVersion = [regex]::Match($asset.name, $assetPattern).Groups["version"].Value
 $installedEngine = Read-EngineVersion -path $enginePath
 $updateEngine = $installedEngine -ne $engineVersion
 
 Write-Host "Updating Strata..." -ForegroundColor "Yellow"
 Write-Host "Version: ${oldVersion} -> ${newVersion}" -ForegroundColor "DarkYellow"
-Write-Host "Engine: ${installedEngine} -> ${engineVersion} ($($component.variant), release ${releaseTag})" -ForegroundColor "DarkYellow"
+Write-Host "Engine: ${installedEngine} -> ${engineVersion} ($($component.variant), ${engineSource})" -ForegroundColor "DarkYellow"
 Write-Host "Release notes: $($release.html_url)" -ForegroundColor "DarkYellow"
 
 if ($version -eq "HEAD") {
@@ -227,11 +286,11 @@ if ($updateEngine) {
 
         if (-not (Test-Download -path $downloadPath -asset $asset)) {
             Remove-Item -Path $downloadPath -Force
-            throw "$($asset.name) does not match GitHub's size and SHA-256. The download was deleted."
+            throw "$($asset.name) does not match ${hashSource} size and SHA-256. The download was deleted."
         }
     }
 
-    Write-Host "[Engine] SHA-256 matches GitHub's $($asset.digest)." -ForegroundColor "Yellow"
+    Write-Host "[Engine] SHA-256 matches ${hashSource} $($asset.digest)." -ForegroundColor "Yellow"
 
     # Unpacked next to engine\ so the swap below is a rename on one drive.
     Remove-Item -Path $incomingPath -Recurse -Force -ErrorAction "SilentlyContinue"
@@ -245,9 +304,16 @@ if ($updateEngine) {
     }
 
     if (-not (Test-Path -Path (Join-Path $incomingPath "strata.exe")) -or
+        -not (Test-Path -Path (Join-Path $incomingPath "engine-component.json")) -or
         (Read-EngineVersion -path $incomingPath) -ne $engineVersion) {
         Remove-Item -Path $incomingPath -Recurse -Force
         throw "$($asset.name) does not hold engine ${engineVersion} with strata.exe at its top level."
+    }
+
+    if ($manifestHash -and
+        (Get-FileHash -Path (Join-Path $incomingPath "engine-component.json") -Algorithm SHA256).Hash -ne $manifestHash) {
+        Remove-Item -Path $incomingPath -Recurse -Force
+        throw "The engine-component.json in $($asset.name) is not the one the feed names."
     }
 }
 
