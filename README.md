@@ -35,13 +35,14 @@ against a running server.
 | Tier file                                                      | Hardware                                                                     | Strata    | Chat decode | 16K prompt   | Agent decode | Agent cache hit |
 | -------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------- | ----------- | ------------ | ------------ | --------------- |
 | `qwen3.8-flash-next.unsloth-ud-iq4_xs.24GB_VRAM_192GB_RAM`     | RTX PRO 5000 Blackwell Laptop 24 GB, 192 GB RAM, 24 cores                    | v0.2.4.2  | 73.6 tok/s  | 2555 tok/s   | 50.0 tok/s   | 69.5 %          |
-| `qwen3.8-flash-next.unsloth-ud-iq4_xs.16GB_8GB_VRAM_128GB_RAM` | RTX 4070 Ti SUPER 16 GB + RTX 2060 SUPER 8 GB (vision), 128 GB RAM, 16 cores | v0.2.7    | 50.1 tok/s  | 3082 tok/s   | 55.8 tok/s   | 69.5 %          |
+| `qwen3.8-flash-next.unsloth-ud-iq4_xs.16GB_8GB_VRAM_128GB_RAM` | RTX 4070 Ti SUPER 16 GB + RTX 2060 SUPER 8 GB (vision), 128 GB RAM, 16 cores | v0.2.15   | 48.1 tok/s  | 3071 tok/s   | 60.5 tok/s   | 69.2 %          |
 
 The 24 GB row was measured with about 1 GB of VRAM taken by other programs at start. v0.2.2
 gave 73.5 tok/s chat decode, 2701 tok/s 16K prompt and 57.0 tok/s agent decode on a free card,
-in an earlier session; it was not rerun beside v0.2.4.2. The 16 GB row was measured on v0.2.7
-(engine 0.1.52); v0.2.2 gave 50.3 tok/s chat decode, 2930 tok/s 16K prompt and 52.7 tok/s agent
-decode in an earlier session, and no older version was rerun beside it.
+in an earlier session; it was not rerun beside v0.2.4.2. The 16 GB row was measured on v0.2.15
+(engine 0.1.60); v0.2.7 (engine 0.1.52) gave 50.1 tok/s chat decode, 3082 tok/s 16K prompt,
+55.8 tok/s agent decode and 69.5 % cache hit in an earlier session, and was not rerun beside it.
+Chat decode spreads 43.8 to 54.0 tok/s over the runs, so its drop is within the noise.
 
 ## Try another context or parallel requests
 
