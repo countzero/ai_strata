@@ -3,6 +3,17 @@
 This changelog follows [Common Changelog](https://common-changelog.org) and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-11-21
+
+_After pulling: run `git submodule update` and `.\update_strata.ps1 -version v0.2.17`. It moves Strata's `.venv` and engine into `vendor\strata\terminal`, installs engine 0.1.63 and Strata's Python packages._
+
+### Changed
+- Move Strata to v0.2.17, which keeps setup, the `.venv` and the engine in `vendor\strata\terminal` ([`c832cb9`](https://github.com/countzero/ai_strata/commit/c832cb9))
+- Run `start.ps1`, `benchmark.ps1` and `experiment.ps1` from `vendor\strata\terminal` ([`c832cb9`](https://github.com/countzero/ai_strata/commit/c832cb9))
+
+### Fixed
+- Fix `update_strata.ps1` for Strata v0.2.16 and later: it moves an install into `terminal\` once and runs `terminal\setup.py` without its `git pull` ([`c832cb9`](https://github.com/countzero/ai_strata/commit/c832cb9))
+
 ## [1.7.0] - 2026-11-18
 
 _After pulling: run `git submodule update` and `.\update_strata.ps1 -version v0.2.15`. It installs engine 0.1.60 and Strata's Python packages._
@@ -89,6 +100,7 @@ _Initial release._
 - Pin Strata v0.1.44.1 as the submodule `vendor/strata` ([`83cf904`](https://github.com/countzero/ai_strata/commit/83cf904))
 - Add the agent rules and the plan-review and release skills ([`3b12a27`](https://github.com/countzero/ai_strata/commit/3b12a27), [`ed51fa6`](https://github.com/countzero/ai_strata/commit/ed51fa6))
 
+[1.8.0]: https://github.com/countzero/ai_strata/releases/tag/v1.8.0
 [1.7.0]: https://github.com/countzero/ai_strata/releases/tag/v1.7.0
 [1.6.0]: https://github.com/countzero/ai_strata/releases/tag/v1.6.0
 [1.5.1]: https://github.com/countzero/ai_strata/releases/tag/v1.5.1
