@@ -70,7 +70,8 @@ $ErrorActionPreference = "Stop"
 $stopwatch = [System.Diagnostics.Stopwatch]::startNew()
 
 $strataPath = Join-Path $PSScriptRoot "vendor\strata"
-$python = Join-Path $strataPath ".venv\Scripts\python.exe"
+$terminalPath = Join-Path $strataPath "terminal"
+$python = Join-Path $terminalPath ".venv\Scripts\python.exe"
 $invariant = [System.Globalization.CultureInfo]::InvariantCulture
 
 function Find-Results {
@@ -96,10 +97,10 @@ function Format-Number {
 }
 
 if (-not (Test-Path -Path $python)) {
-    throw "vendor/strata/.venv is missing. Follow README.md -> New machine first."
+    throw "vendor/strata/terminal/.venv is missing. After a pull, run .\update_strata.ps1 as README.md -> Take a release says; on a new machine, follow README.md -> New machine."
 }
 
-# Resolved before the working directory moves into vendor/strata.
+# Resolved before the working directory moves into vendor/strata/terminal.
 $compareResults = $null
 
 if ($compare) {
@@ -117,7 +118,7 @@ try {
 }
 
 $strataVersion = git -C $strataPath describe --tags --always
-$engineVersion = (Get-Content -Raw -Path (Join-Path $strataPath "engine\BUILD.json") | ConvertFrom-Json).version
+$engineVersion = (Get-Content -Raw -Path (Join-Path $terminalPath "engine\BUILD.json") | ConvertFrom-Json).version
 $outPath = if ($out) {
     [System.IO.Path]::GetFullPath($out, (Get-Location).Path)
 } else {
@@ -137,7 +138,7 @@ if ($compareResults) {
 
 $startedAt = Get-Date
 
-Push-Location -Path $strataPath
+Push-Location -Path $terminalPath
 
 try {
     $benchArguments = @("-u", "tools\strata_bench.py", "--url", $url, "--out", $outPath)

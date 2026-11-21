@@ -9,14 +9,14 @@ procedure.
 
 ## Tier files
 
-- A tier file is a Strata run config for `serve/server.py --config`. Name it
+- A tier file is a Strata run config for `terminal/serve/server.py --config`. Name it
   `<model>.<quant>.<VRAM>_VRAM_<RAM>_RAM.json`, after the hardware, never after a machine.
 - Paths inside Strata (`exe`, `cwd`, `lib_dirs`, `log`, `--expert-profile`, the vision `exe`)
-  stay relative: the server starts in `vendor/strata`. Model paths stay absolute.
+  stay relative: the server starts in `vendor/strata/terminal`. Model paths stay absolute.
 - `"host": "0.0.0.0"` without an `api_key` is deliberate: other devices use the server, and
   Strata only warns about the missing key. Do not narrow the host, and do not add a key.
 - `port` and `gpus_asked` stay out: the server reads neither. It ignores unknown keys silently, so
-  check a new key against `vendor/strata/serve/server.py` before adding it.
+  check a new key against `vendor/strata/terminal/serve/server.py` before adding it.
 - Change a value only with a `benchmark.ps1` run before and after, on the same Strata version.
   The numbers go into `README.md` -> *Tiers* and into the commit message.
 - Monitors stay on the GPU they are plugged into, even when the display takes VRAM from the

@@ -10,6 +10,9 @@ ready-made engine the matching GitHub release names (in its strata-feed.json,
 or as its own asset) and runs Strata's own
 "setup.py --update" for the Python packages and setup's model configs.
 
+From v0.2.16 on, setup.py, the .venv and the engine live in
+vendor/strata/terminal. An install of an older version moves there once.
+
 Everything that can fail (the version, a running server, the download and
 its checksum) is checked before anything is changed. Nothing is committed,
 and the server is neither started nor stopped.
@@ -54,10 +57,15 @@ $ProgressPreference = "SilentlyContinue"
 $stopwatch = [System.Diagnostics.Stopwatch]::startNew()
 
 $strataPath = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "vendor\strata"))
-$enginePath = Join-Path $strataPath "engine"
-$incomingPath = Join-Path $enginePath ".incoming"
-$previousPath = Join-Path $enginePath ".previous"
-$python = Join-Path $strataPath ".venv\Scripts\python.exe"
+$terminalPath = Join-Path $strataPath "terminal"
+
+# Since v0.2.16 setup.py, serve\, the .venv, the installed engine and setup's
+# run configs live in terminal\, and the top-level engine\ holds the engine's
+# sources. Where the .venv is tells the layout this machine is set up in.
+$fromPath = if (Test-Path -Path (Join-Path $terminalPath ".venv\Scripts\python.exe")) { $terminalPath } else { $strataPath }
+$installedEnginePath = Join-Path $fromPath "engine"
+$incomingPath = Join-Path $installedEnginePath ".incoming"
+$python = Join-Path $fromPath ".venv\Scripts\python.exe"
 
 # Git for Windows puts its own tar on the PATH, and GNU tar reads "D:\..." as
 # a remote host. The one Windows ships handles drive letters and .tar.gz.
@@ -90,13 +98,13 @@ if (-not (Test-Path -Path (Join-Path $strataPath ".git"))) {
 }
 
 if (-not (Test-Path -Path $python)) {
-    throw "vendor/strata/.venv is missing. Follow README.md -> New machine first."
+    throw "Neither vendor/strata/terminal/.venv nor vendor/strata/.venv exists. Follow README.md -> New machine first."
 }
 
-$componentPath = Join-Path $enginePath "engine-component.json"
+$componentPath = Join-Path $installedEnginePath "engine-component.json"
 
 if (-not (Test-Path -Path $componentPath)) {
-    throw "No engine is installed in vendor/strata/engine. Follow README.md -> New machine first."
+    throw "No engine is installed in $([System.IO.Path]::GetRelativePath($PSScriptRoot, $installedEnginePath)). Follow README.md -> New machine first."
 }
 
 # The server is several processes. The .venv python.exe is only a launcher:
@@ -147,6 +155,17 @@ $commit = git -C $strataPath rev-parse --verify --quiet "${ref}^{commit}"
 if ($LASTEXITCODE -ne 0 -or !$commit) {
     throw "Strata has no tag or commit '${version}'."
 }
+
+git -C $strataPath cat-file -e "${commit}:terminal/setup.py" 2>$null
+$toPath = if ($LASTEXITCODE -eq 0) { $terminalPath } else { $strataPath }
+
+if ($fromPath -eq $terminalPath -and $toPath -eq $strataPath) {
+    throw "'${version}' predates the terminal\ layout of v0.2.16, and this script does not move an install back out of it."
+}
+
+$moveLayout = $fromPath -ne $toPath
+$enginePath = Join-Path $toPath "engine"
+$previousPath = Join-Path $enginePath ".previous"
 
 $oldCommit = Invoke-StrataGit rev-parse HEAD
 $oldVersion = Invoke-StrataGit describe --tags --always
@@ -261,13 +280,17 @@ if ($asset.digest -notmatch '^sha256:[0-9a-f]{64}$') {
     throw "Neither GitHub nor the feed lists a SHA-256 for $($asset.name), so it cannot be verified."
 }
 
-$installedEngine = Read-EngineVersion -path $enginePath
+$installedEngine = Read-EngineVersion -path $installedEnginePath
 $updateEngine = $installedEngine -ne $engineVersion
 
 Write-Host "Updating Strata..." -ForegroundColor "Yellow"
 Write-Host "Version: ${oldVersion} -> ${newVersion}" -ForegroundColor "DarkYellow"
 Write-Host "Engine: ${installedEngine} -> ${engineVersion} ($($component.variant), ${engineSource})" -ForegroundColor "DarkYellow"
 Write-Host "Release notes: $($release.html_url)" -ForegroundColor "DarkYellow"
+
+if ($moveLayout) {
+    Write-Host "Layout: .venv and the engine move into terminal\ (Strata's layout since v0.2.16)" -ForegroundColor "DarkYellow"
+}
 
 if ($version -eq "HEAD") {
     Write-Host "HEAD runs with the engine of release ${releaseTag}, which can be older than main expects." -ForegroundColor "DarkYellow"
@@ -322,11 +345,38 @@ if ($updateEngine) {
 # released with.
 $movedFiles = @()
 $placedFiles = @()
+$layoutFiles = @()
+$movedVenv = $false
 
 try {
     Write-Host "[Git] Checking out ${newVersion}..." -ForegroundColor "Yellow"
 
     Invoke-StrataGit checkout --quiet --detach $commit
+
+    if ($moveLayout) {
+
+        Write-Host "[Layout] Moving .venv and the engine into terminal\..." -ForegroundColor "Yellow"
+
+        # As START-HERE.bat does before Python starts. setup.py then moves the
+        # run configs, logs and run scripts, and rewrites the paths in them.
+        Move-Item -Path (Join-Path $strataPath ".venv") -Destination (Join-Path $terminalPath ".venv")
+        $movedVenv = $true
+        $python = Join-Path $toPath ".venv\Scripts\python.exe"
+
+        # Everything in the top-level engine\ that git does not track is the
+        # installed engine, engine\.previous included. Build folders stay, as in
+        # setup.py; -clike, because the engine's BUILD.json moves.
+        $tracked = Invoke-StrataGit ls-tree --name-only "${commit}:engine"
+        New-Item -Path $enginePath -ItemType "directory" -Force | Out-Null
+
+        foreach ($entry in Get-ChildItem -Path $installedEnginePath -Force) {
+            if ($entry.Name -in $tracked -or $entry.Name -eq ".incoming" -or $entry.Name -clike "build*") {
+                continue
+            }
+            Move-Item -Path $entry.FullName -Destination $enginePath
+            $layoutFiles += $entry.Name
+        }
+    }
 
     if ($updateEngine) {
 
@@ -372,6 +422,14 @@ try {
         Move-Item -Path (Join-Path $previousPath $name) -Destination $enginePath
     }
 
+    foreach ($name in $layoutFiles) {
+        Move-Item -Path (Join-Path $enginePath $name) -Destination $installedEnginePath
+    }
+
+    if ($movedVenv) {
+        Move-Item -Path (Join-Path $terminalPath ".venv") -Destination (Join-Path $strataPath ".venv")
+    }
+
     git -C $strataPath checkout --quiet --detach $oldCommit
 
     throw
@@ -387,22 +445,47 @@ if (!$updateEngine) {
 Write-Host "[Setup] Updating the Python packages and setup's model configs..." -ForegroundColor "Yellow"
 
 # START-HERE.bat would pause on a failure and hang this script; it only sets
-# PYTHONUTF8 and calls setup.py, which never runs git (unlike UPDATE.bat).
+# PYTHONUTF8 and calls setup.py. Since v0.2.16 "setup.py --update" first runs
+# "git pull", which would leave the pinned tag, and on a detached tag it stops
+# with exit code 1. STRATA_UPDATE_PULLED tells it the pull is already done.
 $previousUtf8 = $env:PYTHONUTF8
-Push-Location -Path $strataPath
+$previousPulled = $env:STRATA_UPDATE_PULLED
+Push-Location -Path $toPath
 
 try {
     $env:PYTHONUTF8 = "1"
+    $env:STRATA_UPDATE_PULLED = "1"
 
     & $python setup.py --update --yes --no-start
 
     if ($LASTEXITCODE -ne 0) {
-        throw "setup.py --update failed with exit code ${LASTEXITCODE}. Strata and its engine are updated; fix the cause and run '.\.venv\Scripts\python.exe setup.py --update --yes --no-start' in vendor\strata."
+        throw "setup.py --update failed with exit code ${LASTEXITCODE}. Strata and its engine are updated; fix the cause and run '`$env:STRATA_UPDATE_PULLED = 1; .\.venv\Scripts\python.exe setup.py --update --yes --no-start' in $([System.IO.Path]::GetRelativePath($PSScriptRoot, $toPath))."
     }
 
 } finally {
     Pop-Location
     $env:PYTHONUTF8 = $previousUtf8
+    $env:STRATA_UPDATE_PULLED = $previousPulled
+}
+
+# setup.py rewrites the engine paths in the run configs and run scripts it
+# moves only when it moved the engine itself, and here this script did.
+if ($moveLayout) {
+    $oldEngine = (Join-Path $strataPath "engine") + "\"
+    $newEngine = $enginePath + "\"
+
+    foreach ($file in Get-ChildItem -Path $terminalPath -File | Where-Object { $_.Name -like "strata-*.json" -or $_.Name -like "run-*.bat" }) {
+        $text = Get-Content -Raw -Path $file.FullName
+        $fixed = if ($file.Extension -eq ".json") {
+            $text.Replace($oldEngine.Replace("\", "\\"), $newEngine.Replace("\", "\\"))
+        } else {
+            $text.Replace($oldEngine, $newEngine)
+        }
+
+        if ($fixed -cne $text) {
+            Set-Content -Path $file.FullName -Value $fixed -NoNewline -Encoding "utf8NoBOM"
+        }
+    }
 }
 
 git -C $PSScriptRoot status --short

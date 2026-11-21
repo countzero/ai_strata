@@ -93,9 +93,10 @@ $ErrorActionPreference = "Stop"
 $stopwatch = [System.Diagnostics.Stopwatch]::startNew()
 
 $strataPath = Join-Path $PSScriptRoot "vendor\strata"
-$python = Join-Path $strataPath ".venv\Scripts\python.exe"
+$terminalPath = Join-Path $strataPath "terminal"
+$python = Join-Path $terminalPath ".venv\Scripts\python.exe"
 $benchmarkScript = Join-Path $PSScriptRoot "benchmark.ps1"
-$needleScript = Join-Path $strataPath "tools\needle_bench.py"
+$needleScript = Join-Path $terminalPath "tools\needle_bench.py"
 $url = "http://127.0.0.1:${port}"
 $invariant = [System.Globalization.CultureInfo]::InvariantCulture
 
@@ -141,7 +142,7 @@ function Resolve-StrataPath {
         return $path
     }
 
-    Join-Path $strataPath $path
+    Join-Path $terminalPath $path
 }
 
 function New-ArmConfig {
@@ -248,7 +249,7 @@ function Start-ArmServer {
 
     $serverArguments = @("-u", "serve\server.py", "--engine", "strata", "--config", "`"${configPath}`"", "--port", "${port}")
 
-    Start-Process -FilePath $python -ArgumentList $serverArguments -WorkingDirectory $strataPath -NoNewWindow -PassThru `
+    Start-Process -FilePath $python -ArgumentList $serverArguments -WorkingDirectory $terminalPath -NoNewWindow -PassThru `
         -RedirectStandardOutput (Join-Path $armPath "server.log") -RedirectStandardError (Join-Path $armPath "server.err.log")
 }
 
@@ -417,7 +418,7 @@ if (-not (Test-Path -Path $tierPath)) {
 }
 
 if (-not (Test-Path -Path $python)) {
-    throw "vendor/strata/.venv is missing. Follow README.md -> New machine first."
+    throw "vendor/strata/terminal/.venv is missing. After a pull, run .\update_strata.ps1 as README.md -> Take a release says; on a new machine, follow README.md -> New machine."
 }
 
 $owner = Get-PortOwner
@@ -451,7 +452,7 @@ if ($check) {
 }
 
 $strataVersion = git -C $strataPath describe --tags --always
-$engineVersion = (Get-Content -Raw -Path (Join-Path $strataPath "engine\BUILD.json") | ConvertFrom-Json).version
+$engineVersion = (Get-Content -Raw -Path (Join-Path $terminalPath "engine\BUILD.json") | ConvertFrom-Json).version
 
 Write-Host "The server on port ${port} stops in 10 seconds and is down until the arms finish (5 to 15 minutes each). Ctrl+C cancels." -ForegroundColor "Yellow"
 Start-Sleep -Seconds 10
@@ -477,8 +478,8 @@ try {
     if ($wasRunning) {
         Write-Host "Starting tier ${tier} again in a new window..." -ForegroundColor "Yellow"
 
-        $command = ".\.venv\Scripts\python.exe serve\server.py --engine strata --config ..\..\presets\${tier}.json --port ${port}"
-        Start-Process -FilePath (Get-Process -Id $PID).Path -ArgumentList "-NoExit -wd `"${strataPath}`" -c `"${command}`""
+        $command = ".\.venv\Scripts\python.exe serve\server.py --engine strata --config ..\..\..\presets\${tier}.json --port ${port}"
+        Start-Process -FilePath (Get-Process -Id $PID).Path -ArgumentList "-NoExit -wd `"${terminalPath}`" -c `"${command}`""
 
         if (Wait-Server -process $null) {
             Write-Host "Tier ${tier} is serving again." -ForegroundColor "Yellow"

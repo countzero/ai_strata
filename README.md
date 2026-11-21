@@ -16,11 +16,11 @@ It runs the server in this window on port 8083 (`-port` picks another) until Ctr
 checks that every path the tier file names exists and that no other server, such as Basalt, holds
 the port; it never stops that server. `.\start.ps1 -help` shows the options.
 
-The script starts the server from `vendor\strata`, where the tier file's relative paths resolve.
-By hand that is:
+The script starts the server from `vendor\strata\terminal`, where the tier file's relative paths
+resolve. By hand that is:
 
 ```
-pwsh -NoExit -wd <repo>\vendor\strata -c ".\.venv\Scripts\python.exe serve\server.py --engine strata --config ..\..\presets\<tier>.json --port 8083"
+pwsh -NoExit -wd <repo>\vendor\strata\terminal -c ".\.venv\Scripts\python.exe serve\server.py --engine strata --config ..\..\..\presets\<tier>.json --port 8083"
 ```
 
 `<repo>` is where you cloned this repository. A tier file sets `"host": "0.0.0.0"`, so
@@ -35,14 +35,16 @@ against a running server.
 | Tier file                                                      | Hardware                                                                     | Strata    | Chat decode | 16K prompt   | Agent decode | Agent cache hit |
 | -------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------- | ----------- | ------------ | ------------ | --------------- |
 | `qwen3.8-flash-next.unsloth-ud-iq4_xs.24GB_VRAM_192GB_RAM`     | RTX PRO 5000 Blackwell Laptop 24 GB, 192 GB RAM, 24 cores                    | v0.2.4.2  | 73.6 tok/s  | 2555 tok/s   | 50.0 tok/s   | 69.5 %          |
-| `qwen3.8-flash-next.unsloth-ud-iq4_xs.16GB_8GB_VRAM_128GB_RAM` | RTX 4070 Ti SUPER 16 GB + RTX 2060 SUPER 8 GB (vision), 128 GB RAM, 16 cores | v0.2.15   | 48.1 tok/s  | 3071 tok/s   | 60.5 tok/s   | 69.2 %          |
+| `qwen3.8-flash-next.unsloth-ud-iq4_xs.16GB_8GB_VRAM_128GB_RAM` | RTX 4070 Ti SUPER 16 GB + RTX 2060 SUPER 8 GB (vision), 128 GB RAM, 16 cores | v0.2.17   | 46.6 tok/s  | 3087 tok/s   | 60.0 tok/s   | 71.1 %          |
 
 The 24 GB row was measured with about 1 GB of VRAM taken by other programs at start. v0.2.2
 gave 73.5 tok/s chat decode, 2701 tok/s 16K prompt and 57.0 tok/s agent decode on a free card,
-in an earlier session; it was not rerun beside v0.2.4.2. The 16 GB row was measured on v0.2.15
-(engine 0.1.60); v0.2.7 (engine 0.1.52) gave 50.1 tok/s chat decode, 3082 tok/s 16K prompt,
-55.8 tok/s agent decode and 69.5 % cache hit in an earlier session, and was not rerun beside it.
-Chat decode spreads 43.8 to 54.0 tok/s over the runs, so its drop is within the noise.
+in an earlier session; it was not rerun beside v0.2.4.2. The 16 GB row was measured on v0.2.17
+(engine 0.1.63), in the second benchmark after the start: the first, right after the model
+loaded, gave 34.0 tok/s chat decode and 54.5 tok/s agent decode. v0.2.15 (engine 0.1.60) gave
+48.1 tok/s chat decode, 3071 tok/s 16K prompt, 60.5 tok/s agent decode and 69.2 % cache hit in an
+earlier session, and was not rerun beside it. Chat decode spreads 43.4 to 57.8 tok/s over the
+runs, so its drop is within the noise.
 
 ## Try another context or parallel requests
 
@@ -59,7 +61,7 @@ spread, so run them beside `baseline` with `-runs 5`.
 ## New machine
 
 1. `git clone --recurse-submodules <url of this repository> <repo>`
-2. In `vendor\strata`:
+2. In `vendor\strata` (it sets up in `terminal\`):
    `.\START-HERE.bat --yes --no-start --family unsloth --model <quant> --context <tokens> --gpu <n> --port 8083 --gguf-dir <GGUF folder> --data-dir <data folder>`.
    The data folder holds `packs\` and `mtp\` in the tier file's paths. Name the model: with `--no-start`
    setup takes its own recommended answers, which can be another model and a new download. Add
@@ -81,12 +83,14 @@ Never run Strata's `UPDATE.bat`: it pulls `main` and leaves the pinned version.
 1. Stop the server.
 2. `.\update_strata.ps1`, or `.\update_strata.ps1 -version <tag|commit|HEAD>`. Without `-version`
    it takes the newest tag without a suffix such as `-beta`. It checks out the version in
-   `vendor\strata`, installs the engine the matching release names into `engine\` (the old one goes
-   to `engine\.previous\`) and runs setup's `--update` for the Python packages and setup's own
-   `strata-*.json`. Read the release notes it links. `HEAD` gets the engine of the newest release
-   before it, which can be older than `main` expects.
+   `vendor\strata`, installs the engine the matching release names into `terminal\engine\` (the
+   old one goes to `terminal\engine\.previous\`) and runs setup's `--update` for the Python
+   packages and setup's own `strata-*.json`. Read the release notes it links. `HEAD` gets the
+   engine of the newest release before it, which can be older than `main` expects. Since v0.2.16
+   Strata keeps setup, the `.venv` and the engine in `terminal\`; an install of an older version
+   moves there on its first update.
 3. Compare setup's config with the tier file:
-   `git diff --no-index presets\<tier>.json vendor\strata\strata-unsloth-ud-iq4_xs.json`.
+   `git diff --no-index presets\<tier>.json vendor\strata\terminal\strata-unsloth-ud-iq4_xs.json`.
    Ignore the path differences (relative here, absolute there). Carry over new or changed flags,
    and `lib_dirs`: a renamed CUDA folder there fails silently, and the engine then stops
    without naming the missing DLL.
@@ -98,3 +102,4 @@ Never run Strata's `UPDATE.bat`: it pulls `main` and leaves the pinned version.
 5. `git add vendor/strata presets README.md` and commit as "Update Strata to <tag>".
 
 Rollback: `git checkout <last commit> -- presets`, then `.\update_strata.ps1 -version <old tag>`.
+The script refuses a tag before v0.2.16 once the install is in `terminal\`.

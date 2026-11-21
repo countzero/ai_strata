@@ -5,9 +5,9 @@
 Start the Strata server with a tier file.
 
 .DESCRIPTION
-Runs vendor\strata\serve\server.py with a tier file from presets\ on the given
-port, in this window, until it is stopped with Ctrl+C. The server starts in
-vendor\strata, where the tier file's relative paths resolve.
+Runs vendor\strata\terminal\serve\server.py with a tier file from presets\ on
+the given port, in this window, until it is stopped with Ctrl+C. The server
+starts in vendor\strata\terminal, where the tier file's relative paths resolve.
 
 Checks first that Strata is set up, that every path the tier file names exists
 and that no other server (such as Basalt) listens on the port. It never stops
@@ -199,10 +199,11 @@ function Select-Tier {
 
 $presetsPath = Join-Path $PSScriptRoot "presets"
 $strataPath = Join-Path $PSScriptRoot "vendor\strata"
-$python = Join-Path $strataPath ".venv\Scripts\python.exe"
+$terminalPath = Join-Path $strataPath "terminal"
+$python = Join-Path $terminalPath ".venv\Scripts\python.exe"
 
 if (-not (Test-Path -Path $python)) {
-    throw "vendor\strata\.venv is missing. Follow README.md -> New machine first."
+    throw "vendor\strata\terminal\.venv is missing. After a pull, run .\update_strata.ps1 as README.md -> Take a release says; on a new machine, follow README.md -> New machine."
 }
 
 if (!$tier) {
@@ -236,7 +237,7 @@ if ($config.vision) {
 }
 
 $missing = @($paths | Where-Object {
-    $path = if ([System.IO.Path]::IsPathRooted($_)) { $_ } else { Join-Path $strataPath $_ }
+    $path = if ([System.IO.Path]::IsPathRooted($_)) { $_ } else { Join-Path $terminalPath $_ }
     -not (Test-Path -Path $path)
 })
 
@@ -257,7 +258,7 @@ Write-Host "Version: $(git -C $strataPath describe --tags --always)" -Foreground
 Write-Host "Tier: $(Split-Path -Path $configPath -LeafBase)" -ForegroundColor "DarkYellow"
 Write-Host "Port: ${port}" -ForegroundColor "DarkYellow"
 
-Push-Location -Path $strataPath
+Push-Location -Path $terminalPath
 
 try {
     & $python serve\server.py --engine strata --config $configPath --port $port
